@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue'
 import { useQuestionnaire } from './composables/useQuestionnaire.js'
 import { useToast } from './composables/useToast.js'
+import { VueDraggable } from 'vue-draggable-plus'
 import TreeNode from './components/TreeNode.vue'
 import NodeEditor from './components/NodeEditor.vue'
 import PreviewPanel from './components/PreviewPanel.vue'
@@ -135,15 +136,21 @@ function doExport() {
           <div v-if="!qb.nodes.value.length" style="padding:20px;text-align:center;color:var(--text3);font-size:13px">
             Noch keine Nodes.<br>Oben "+ Abschnitt" klicken.
           </div>
-          <TreeNode
-            v-for="node in qb.nodes.value"
-            :key="node.id"
-            :node="node"
-            :selected-id="selectedId"
-            @select="selectNode"
-            @delete="handleDelete"
-            @add-child="handleAddChild"
-          />
+          <VueDraggable
+            v-model="qb.variants[qb.currentVariant.value].nodes"
+            handle=".drag-handle"
+            :animation="150"
+          >
+            <TreeNode
+              v-for="element in qb.variants[qb.currentVariant.value].nodes"
+              :key="element.id"
+              :node="element"
+              :selected-id="selectedId"
+              @select="selectNode"
+              @delete="handleDelete"
+              @add-child="handleAddChild"
+            />
+          </VueDraggable>
         </div>
         <div class="panel-footer">
           <div class="stats-row">

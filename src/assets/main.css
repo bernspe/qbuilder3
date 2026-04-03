@@ -200,6 +200,22 @@ textarea { resize: vertical; min-height: 64px; line-height: 1.5; }
 .ti-actions { display: none; gap: 2px; }
 .tree-item:hover .ti-actions { display: flex; }
 
+.drag-handle {
+  font-size: 13px;
+  color: var(--text3);
+  cursor: grab;
+  opacity: 0;
+  flex-shrink: 0;
+  line-height: 1;
+  padding: 0 2px;
+  transition: opacity 0.1s;
+}
+.tree-item:hover .drag-handle { opacity: 1; }
+.drag-handle:active { cursor: grabbing; }
+
+.sortable-ghost { opacity: 0.35; background: var(--blue-bg); border-radius: var(--radius); }
+.sortable-drag { opacity: 0.9; }
+
 /* ── Editor ── */
 .editor-empty {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
