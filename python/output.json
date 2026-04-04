@@ -1,0 +1,1688 @@
+{
+  "exportedAt": "2026-04-03T20:40:07.000Z",
+  "variants": {
+    "main": {
+      "id": "main",
+      "label": "Original",
+      "nodes": [
+        {
+          "id": "n3_cfxi",
+          "type": "section",
+          "label": "",
+          "required": false,
+          "helpText": "",
+          "options": [],
+          "children": [
+            {
+              "id": "n2_mlc7",
+              "type": "question",
+              "label": "Stehen",
+              "required": false,
+              "helpText": "",
+              "options": [
+                "Keine Probleme",
+                "Wenige Probleme",
+                "Einige Probleme",
+                "Starke Probleme",
+                "Sehr starke Probleme oder gar nicht möglich"
+              ],
+              "children": [
+                {
+                  "id": "n1_uo7o",
+                  "type": "icf",
+                  "label": "In einer Körperposition verbleiben",
+                  "icfCode": "d415",
+                  "questionType": "single",
+                  "options": [
+                    "Keine Probleme",
+                    "Wenige Probleme",
+                    "Einige Probleme",
+                    "Starke Probleme",
+                    "Sehr starke Probleme oder gar nicht möglich"
+                  ],
+                  "helpText": "",
+                  "required": false,
+                  "subheading": "In derselben erforderlichen Körperposition zu verbleiben, wie sitzen bleiben oder bei der Arbeit bzw. in der Schule stehen bleiben",
+                  "icon": "icf:d415",
+                  "question": "Wie lange können Sie sitzen bleiben, ohne dass Sie aufstehen oder die Position wechseln müssen, weil es für Sie unangenehm oder schmerzhaft wird?",
+                  "defaultIdx": 0
+                }
+              ],
+              "question": "Haben Sie Probleme, eine halbe Stunde oder länger zu stehen?",
+              "reference": "WHODAS",
+              "questionType": "yesno",
+              "defaultIdx": 0
+            },
+            {
+              "id": "n2_crmd",
+              "type": "question",
+              "label": "Haushalt",
+              "required": false,
+              "helpText": "",
+              "options": [
+                "Keine Probleme",
+                "Wenige Probleme",
+                "Einige Probleme",
+                "Starke Probleme",
+                "Sehr starke Probleme oder gar nicht möglich"
+              ],
+              "children": [
+                {
+                  "id": "n6_rcpd",
+                  "type": "icf",
+                  "label": "Waren und Dienstleistungen des täglichen Bedarfs beschaffen",
+                  "icfCode": "d620",
+                  "questionType": "single",
+                  "options": [
+                    "Keine Probleme",
+                    "Wenige Probleme",
+                    "Einige Probleme",
+                    "Starke Probleme",
+                    "Sehr starke Probleme oder gar nicht möglich"
+                  ],
+                  "helpText": "",
+                  "required": false,
+                  "subheading": "Alle Waren und Dienstleistungen des täglichen Bedarfs auszuwählen, zu beschaffen und zu transportieren, wie Lebensmittel, Getränke, Kleidung, Reinigungsmaterial, Brennstoff, Haushaltsartikel, Utensilien, Kochgeschirr, häusliche Hilfsmittel und Werkzeuge auswählen, beschaffen, transportieren und lagern; Versorgungs- und andere Dienstleistungen für den Haushalt beschaffen",
+                  "icon": "icf:d620",
+                  "question": "Wie gut können Sie selbstständig einkaufen gehen – zum Beispiel Lebensmittel oder andere Dinge des täglichen Bedarfs besorgen?",
+                  "defaultIdx": 0
+                },
+                {
+                  "id": "n1_3jic",
+                  "type": "icf",
+                  "label": "Mahlzeiten vorbereiten",
+                  "icfCode": "d630",
+                  "questionType": "single",
+                  "options": [
+                    "Keine Probleme",
+                    "Wenige Probleme",
+                    "Einige Probleme",
+                    "Starke Probleme",
+                    "Sehr starke Probleme oder gar nicht möglich"
+                  ],
+                  "helpText": "",
+                  "required": false,
+                  "subheading": "Einfache und komplexe Mahlzeiten für sich selbst und andere zu planen, zu organisieren, zu kochen und anzurichten, wie ein Menü zubereiten, genießbare Lebensmittel und Getränke auswählen, Zutaten für die Vorbereitung der Mahlzeit zusammenstellen, mit Wärme kochen sowie kalte Speisen und Getränke vorbereiten und die Speisen servieren",
+                  "icon": "icf:d630",
+                  "question": "Wie gut können Sie selbstständig Mahlzeiten zubereiten – von einfachen Speisen bis hin zu aufwändigeren Gerichten?",
+                  "defaultIdx": 0
+                },
+                {
+                  "id": "n9_c9p3",
+                  "type": "icf",
+                  "label": "Hausarbeiten erledigen",
+                  "icfCode": "d640",
+                  "questionType": "single",
+                  "options": [
+                    "Keine Probleme",
+                    "Wenige Probleme",
+                    "Einige Probleme",
+                    "Starke Probleme",
+                    "Sehr starke Probleme oder gar nicht möglich"
+                  ],
+                  "helpText": "",
+                  "required": false,
+                  "subheading": "Einen Haushalt zu handhaben durch Reinigen des Hauses, Waschen von Kleidung, Benutzung von Haushaltsgeräten, Lagerung von Lebensmitteln, Entsorgung von Müll, wie fegen, moppen, Tische, Wände und andere Oberflächen reinigen; Haushaltsmüll zu sammeln und zu entsorgen; Zimmer, Toiletten und Schubladen in Ordnung zu halten; schmutzige Kleidung zu sammeln, zu waschen, zu trocknen, zusammenzulegen und zu bügeln; Schuhwerk zu reinigen; Besen, Bürsten und Staubsauger, Waschmaschinen, Trockner und Bügeleisen zu benutzen",
+                  "icon": "icf:d640",
+                  "question": "Wie gut können Sie Ihren Haushalt selbstständig sauber und in Ordnung halten – zum Beispiel staubsaugen, wischen oder Wäsche waschen?",
+                  "defaultIdx": 0
+                },
+                {
+                  "id": "n8_cky6",
+                  "type": "icf",
+                  "label": "Haushaltsgegenstände pflegen",
+                  "icfCode": "d650",
+                  "questionType": "single",
+                  "options": [
+                    "Keine Probleme",
+                    "Wenige Probleme",
+                    "Einige Probleme",
+                    "Starke Probleme",
+                    "Sehr starke Probleme oder gar nicht möglich"
+                  ],
+                  "helpText": "",
+                  "required": false,
+                  "subheading": "Haushalts- und andere persönliche Gegenstände, einschließlich Haus und dessen Inhalt, Kleidung, Fahrzeuge und Hilfsmittel, instand halten und instand setzen sowie sich um Pflanzen und Tiere kümmern, wie Räume anstreichen und tapezieren, Einrichtungsgegenstände befestigen, Wasserleitungen instand setzen, die Funktionsfähigkeit von Fahrzeugen sicherstellen, Pflanzen gießen, Haus- und Nutztiere pflegen und füttern",
+                  "icon": "icf:d650",
+                  "question": "Wie gut können Sie Haushaltsgegenstände oder Ihre Wohnung selbstständig instand halten – zum Beispiel kleine Reparaturen durchführen, Pflanzen pflegen oder ein Haustier versorgen?",
+                  "defaultIdx": 0
+                },
+                {
+                  "id": "n5_wbuo",
+                  "type": "icf",
+                  "label": "Anderen helfen",
+                  "icfCode": "d660",
+                  "questionType": "single",
+                  "options": [
+                    "Keine Probleme",
+                    "Wenige Probleme",
+                    "Einige Probleme",
+                    "Starke Probleme",
+                    "Sehr starke Probleme oder gar nicht möglich"
+                  ],
+                  "helpText": "",
+                  "required": false,
+                  "subheading": "Haushaltsmitgliedern und anderen beim Lernen, Kommunizieren, der Selbstversorgung, der (Fort-)Bewegung innerhalb und außerhalb des Hauses zu helfen; sich dem Wohlbefinden der Haushaltsmitglieder und anderer widmen",
+                  "icon": "icf:d660",
+                  "question": "Wie gut können Sie anderen Menschen in Ihrem Umfeld helfen – zum Beispiel Familienangehörigen, Freunden oder Nachbarn?",
+                  "defaultIdx": 0
+                }
+              ],
+              "question": "Haben Sie Probleme, Ihren Haushalt zu führen?",
+              "reference": "WHODAS",
+              "questionType": "yesno",
+              "defaultIdx": 0
+            },
+            {
+              "id": "n4_lerv",
+              "type": "question",
+              "label": "Lernen",
+              "required": false,
+              "helpText": "Haben Sie Probleme, an einen Ort zu kommen, den Sie vorher nicht kannten?",
+              "options": [
+                "Keine Probleme",
+                "Wenige Probleme",
+                "Einige Probleme",
+                "Starke Probleme",
+                "Sehr starke Probleme oder gar nicht möglich"
+              ],
+              "children": [
+                {
+                  "id": "n3_5eri",
+                  "type": "icf",
+                  "label": "Sich Fertigkeiten aneignen",
+                  "icfCode": "d155",
+                  "questionType": "single",
+                  "options": [
+                    "Keine Probleme",
+                    "Wenige Probleme",
+                    "Einige Probleme",
+                    "Starke Probleme",
+                    "Sehr starke Probleme oder gar nicht möglich"
+                  ],
+                  "helpText": "",
+                  "required": false,
+                  "subheading": "Elementare und komplexe Fähigkeiten für integrierte Mengen von Handlungen und Aufgaben zu entwickeln, um die Aneignung einer Fertigkeit anzugehen und zu Ende zu bringen, wie Werkzeuge handhaben oder Spiele wie Schach spielen",
+                  "icon": "icf:d155",
+                  "question": "Wie leicht fällt es Ihnen, neue Fertigkeiten zu erlernen – zum Beispiel den Umgang mit einem neuen Werkzeug oder das Erlernen eines neuen Spiels?",
+                  "defaultIdx": 0
+                },
+                {
+                  "id": "n2_m687",
+                  "type": "icf",
+                  "label": "Aufmerksamkeit fokussieren",
+                  "icfCode": "d160",
+                  "questionType": "single",
+                  "options": [
+                    "Keine Probleme",
+                    "Wenige Probleme",
+                    "Einige Probleme",
+                    "Starke Probleme",
+                    "Sehr starke Probleme oder gar nicht möglich"
+                  ],
+                  "helpText": "",
+                  "required": false,
+                  "subheading": "Sich absichtsvoll auf einen bestimmten Reiz zu konzentrieren, wie ablenkende Geräusche filtern",
+                  "icon": "icf:d160",
+                  "question": "Wie gut gelingt es Ihnen, sich auf eine Sache zu konzentrieren und dabei Ablenkungen auszublenden?",
+                  "defaultIdx": 0
+                },
+                {
+                  "id": "n8_kqwt",
+                  "type": "icf",
+                  "label": "Probleme lösen",
+                  "icfCode": "d175",
+                  "questionType": "single",
+                  "options": [
+                    "Keine Probleme",
+                    "Wenige Probleme",
+                    "Einige Probleme",
+                    "Starke Probleme",
+                    "Sehr starke Probleme oder gar nicht möglich"
+                  ],
+                  "helpText": "",
+                  "required": false,
+                  "subheading": "Lösungen für eine Frage oder Situation zu finden, indem das Problem identifiziert und analysiert wird, Lösungsmöglichkeiten entwickelt und die möglichen Auswirkungen der Lösungen abgeschätzt werden und die gewählte Lösung umgesetzt wird, wie die Auseinandersetzung zweier Personen schlichten",
+                  "icon": "icf:d175",
+                  "question": "Wie gut gelingt es Ihnen, wenn Sie auf ein Problem stoßen, die Situation zu analysieren und eine passende Lösung zu finden und umzusetzen?",
+                  "defaultIdx": 0
+                }
+              ],
+              "question": "Haben Sie Probleme, neue Dinge zu lernen oder neue Aufgaben zu erfüllen?",
+              "reference": "WHODAS",
+              "questionType": "yesno",
+              "defaultIdx": 0
+            },
+            {
+              "id": "n1_ofe6",
+              "type": "question",
+              "label": "Gesellschaft",
+              "required": false,
+              "helpText": "",
+              "options": [
+                "Keine Probleme",
+                "Wenige Probleme",
+                "Einige Probleme",
+                "Starke Probleme",
+                "Sehr starke Probleme oder gar nicht möglich"
+              ],
+              "children": [
+                {
+                  "id": "n1_q708",
+                  "type": "icf",
+                  "label": "Gemeinschaftsleben",
+                  "icfCode": "d910",
+                  "questionType": "single",
+                  "options": [
+                    "Keine Probleme",
+                    "Wenige Probleme",
+                    "Einige Probleme",
+                    "Starke Probleme",
+                    "Sehr starke Probleme oder gar nicht möglich"
+                  ],
+                  "helpText": "",
+                  "required": false,
+                  "subheading": "Sich an allen Aspekten des gemeinschaftlichen sozialen Lebens zu beteiligen, wie in Wohlfahrtsorganisationen, Dienstleistungsvereinigungen oder professionellen Sozialorganisationen mitzuwirken",
+                  "icon": "icf:d910",
+                  "question": "Wie gut gelingt es Ihnen, sich in Ihrer Gemeinschaft zu engagieren, z.B. in Vereinen, sozialen Organisationen oder Nachbarschaftsinitiativen?",
+                  "defaultIdx": 0
+                },
+                {
+                  "id": "n8_hhbn",
+                  "type": "icf",
+                  "label": "Erholung und Freizeit",
+                  "icfCode": "d920",
+                  "questionType": "single",
+                  "options": [
+                    "Keine Probleme",
+                    "Wenige Probleme",
+                    "Einige Probleme",
+                    "Starke Probleme",
+                    "Sehr starke Probleme oder gar nicht möglich"
+                  ],
+                  "helpText": "",
+                  "required": false,
+                  "subheading": "Sich an allen Formen des Spiels, von Freizeit- oder Erholungsaktivitäten zu beteiligen, wie an Spiel und Sport in informeller oder organisierter Form, Programmen für die körperliche Fitness, Entspannung, Unterhaltung oder Zerstreuung; Kunstgalerien, Museen, Kino oder Theater besuchen, Handarbeiten machen und Hobbys frönen, zur Erbauung lesen, Musikinstrumente spielen; Sehenswürdigkeiten besichtigen, Tourismus- und Vergnügungsreisen machen",
+                  "icon": "icf:d920",
+                  "question": "Wie gut gelingt es Ihnen, in Ihrer Freizeit Aktivitäten nachzugehen, die Ihnen Freude bereiten oder zur Erholung beitragen?",
+                  "defaultIdx": 0
+                },
+                {
+                  "id": "n5_snca",
+                  "type": "icf",
+                  "label": "Religion und Spiritualität",
+                  "icfCode": "d930",
+                  "questionType": "single",
+                  "options": [
+                    "Keine Probleme",
+                    "Wenige Probleme",
+                    "Einige Probleme",
+                    "Starke Probleme",
+                    "Sehr starke Probleme oder gar nicht möglich"
+                  ],
+                  "helpText": "",
+                  "required": false,
+                  "subheading": "Sich an religiösen und spirituellen Aktivitäten, Organisationen oder Praktiken zur Selbsterfüllung, Bedeutungsfindung, für religiöse und spirituelle Werte sowie zur Bildung von Beziehung zu einer göttlichen Macht zu beteiligen, wie an religiösen Diensten in einer Kirche, einem Tempel, einer Moschee oder Synagoge teilnehmen, aus religiösen Gründen beten und singen; spirituelle Kontemplation",
+                  "icon": "icf:d930",
+                  "question": "Haben Sie eine religiöse oder spirituelle Praxis, und wie gut gelingt es Ihnen, diese in Ihrem Alltag auszuleben?",
+                  "defaultIdx": 0
+                },
+                {
+                  "id": "n7_ljnt",
+                  "type": "icf",
+                  "label": "Politisches Leben und Staatsbürgerschaft",
+                  "icfCode": "d950",
+                  "questionType": "single",
+                  "options": [
+                    "Keine Probleme",
+                    "Wenige Probleme",
+                    "Einige Probleme",
+                    "Starke Probleme",
+                    "Sehr starke Probleme oder gar nicht möglich"
+                  ],
+                  "helpText": "",
+                  "required": false,
+                  "subheading": "Sich als Bürger am sozialen, politischen und staatlichen Leben zu beteiligen, der den rechtlichen Status als Staatsbürger besitzt und die damit verbundenen Rechte, den Schutz, die Vorteile und Pflichten genießt, wie das Wahlrecht wahrnehmen, für ein politisches Amt kandidieren, politische Vereinigungen gründen; die Rechte und die Freiheit eines Staatsbürgers zu genießen (wie das Recht auf Meinungs-, Versammlungs- und Religionsfreiheit, Schutz vor unverhältnismäßiger oder unrechtmäßiger Verfolgung und Gefangennahme, das Recht auf Rechtsberatung und Verteidigung, auf ein Gerichtsverfahren sowie andere Rechte und Schutz vor Diskriminierung); den rechtlichen Status als Staatsbürger haben",
+                  "icon": "icf:d950",
+                  "question": "Wie gut gelingt es Ihnen, Ihr Wahlrecht auszuüben – also zum Beispiel an Wahlen oder Abstimmungen teilzunehmen?",
+                  "defaultIdx": 0
+                }
+              ],
+              "question": "Haben Sie Probleme, an gesellschaftlichen Anlässen wie Festen oder Konzerten teilzunehmen (wie andere Menschen)?",
+              "reference": "WHODAS",
+              "questionType": "yesno",
+              "defaultIdx": 0
+            },
+            {
+              "id": "n3_eo9p",
+              "type": "question",
+              "label": "Belastung",
+              "required": false,
+              "helpText": "",
+              "options": [
+                "Keine Probleme",
+                "Wenige Probleme",
+                "Einige Probleme",
+                "Starke Probleme",
+                "Sehr starke Probleme oder gar nicht möglich"
+              ],
+              "children": [],
+              "question": "Haben Sie durch Ihren gesundheitlichen Zustand seelische Probleme?",
+              "reference": "WHODAS",
+              "questionType": "single",
+              "defaultIdx": 0
+            },
+            {
+              "id": "n4_tigt",
+              "type": "question",
+              "label": "Konzentrieren",
+              "required": false,
+              "helpText": "",
+              "options": [
+                "Keine Probleme",
+                "Wenige Probleme",
+                "Einige Probleme",
+                "Starke Probleme",
+                "Sehr starke Probleme oder gar nicht möglich"
+              ],
+              "children": [
+                {
+                  "id": "n1_9lsu",
+                  "type": "icf",
+                  "label": "Aufmerksamkeit fokussieren",
+                  "icfCode": "d160",
+                  "questionType": "single",
+                  "options": [
+                    "Keine Probleme",
+                    "Wenige Probleme",
+                    "Einige Probleme",
+                    "Starke Probleme",
+                    "Sehr starke Probleme oder gar nicht möglich"
+                  ],
+                  "helpText": "",
+                  "required": false,
+                  "subheading": "Sich absichtsvoll auf einen bestimmten Reiz zu konzentrieren, wie ablenkende Geräusche filtern",
+                  "icon": "icf:d160",
+                  "question": "Wie gut gelingt es Ihnen, sich auf eine Sache zu konzentrieren und dabei Ablenkungen auszublenden?",
+                  "defaultIdx": 0
+                },
+                {
+                  "id": "n5_201a",
+                  "type": "icf",
+                  "label": "Probleme lösen",
+                  "icfCode": "d175",
+                  "questionType": "single",
+                  "options": [
+                    "Keine Probleme",
+                    "Wenige Probleme",
+                    "Einige Probleme",
+                    "Starke Probleme",
+                    "Sehr starke Probleme oder gar nicht möglich"
+                  ],
+                  "helpText": "",
+                  "required": false,
+                  "subheading": "Lösungen für eine Frage oder Situation zu finden, indem das Problem identifiziert und analysiert wird, Lösungsmöglichkeiten entwickelt und die möglichen Auswirkungen der Lösungen abgeschätzt werden und die gewählte Lösung umgesetzt wird, wie die Auseinandersetzung zweier Personen schlichten",
+                  "icon": "icf:d175",
+                  "question": "Wie gut gelingt es Ihnen, wenn Sie auf ein Problem stoßen, die Situation zu analysieren und eine passende Lösung zu finden und umzusetzen?",
+                  "defaultIdx": 0
+                },
+                {
+                  "id": "n2_4k9r",
+                  "type": "icf",
+                  "label": "Kommunizieren als Empfänger gesprochener Mitteilungen",
+                  "icfCode": "d310",
+                  "questionType": "single",
+                  "options": [
+                    "Keine Probleme",
+                    "Wenige Probleme",
+                    "Einige Probleme",
+                    "Starke Probleme",
+                    "Sehr starke Probleme oder gar nicht möglich"
+                  ],
+                  "helpText": "",
+                  "required": false,
+                  "subheading": "Die wörtliche und übertragene Bedeutung von gesprochenen Mitteilungen zu erfassen, wie verstehen, ob eine Aussage eine Tatsache behauptet oder ob sie eine idiomatische Wendung ist",
+                  "icon": "icf:d310",
+                  "question": "Wie gut verstehen Sie gesprochene Sprache – sowohl den direkten Inhalt als auch Redewendungen oder übertragene Bedeutungen?",
+                  "defaultIdx": 0
+                },
+                {
+                  "id": "n1_qz7p",
+                  "type": "icf",
+                  "label": "Kommunizieren als Empfänger schriftlicher Mitteilungen",
+                  "icfCode": "d325",
+                  "questionType": "single",
+                  "options": [
+                    "Keine Probleme",
+                    "Wenige Probleme",
+                    "Einige Probleme",
+                    "Starke Probleme",
+                    "Sehr starke Probleme oder gar nicht möglich"
+                  ],
+                  "helpText": "",
+                  "required": false,
+                  "subheading": "Die wörtliche und übertragene Bedeutung schriftlicher Mitteilungen (einschließlich Braille) zu erfassen, wie politische Ereignisse in der Tagespresse verfolgen oder die Absicht einer religiösen Schrift verstehen",
+                  "icon": "icf:d325",
+                  "question": "Wie gut können Sie schriftliche Texte lesen und verstehen – zum Beispiel Briefe, Zeitungsartikel oder Formulare?",
+                  "defaultIdx": 0
+                },
+                {
+                  "id": "n3_7thc",
+                  "type": "icf",
+                  "label": "Konversation",
+                  "icfCode": "d350",
+                  "questionType": "single",
+                  "options": [
+                    "Keine Probleme",
+                    "Wenige Probleme",
+                    "Einige Probleme",
+                    "Starke Probleme",
+                    "Sehr starke Probleme oder gar nicht möglich"
+                  ],
+                  "helpText": "",
+                  "required": false,
+                  "subheading": "Einen Gedanken- und Ideenaustausch in mündlicher oder schriftlicher Form, in Gebärdensprache oder auf anderer sprachlicher Weise zu beginnen, aufrecht zu erhalten und zu beenden, mit einer oder mehreren Personen, Bekannten oder Fremden, in formeller oder informeller Form",
+                  "icon": "icf:d350",
+                  "question": "Wie leicht fällt es Ihnen, ein Gespräch zu beginnen – zum Beispiel wenn Sie jemanden zum ersten Mal treffen oder eine Unterhaltung mit einer Gruppe von Menschen anfangen möchten?",
+                  "defaultIdx": 0
+                },
+                {
+                  "id": "n3_o9mp",
+                  "type": "icf",
+                  "label": "Diskussion",
+                  "icfCode": "d355",
+                  "questionType": "single",
+                  "options": [
+                    "Keine Probleme",
+                    "Wenige Probleme",
+                    "Einige Probleme",
+                    "Starke Probleme",
+                    "Sehr starke Probleme oder gar nicht möglich"
+                  ],
+                  "helpText": "",
+                  "required": false,
+                  "subheading": "Eine Erörterung eines Sachverhaltes mit Pro- und Kontra-Argumenten oder eine Debatte in mündlicher oder schriftlicher Form, in Gebärdensprache oder auf andere sprachliche Weise zu beginnen, aufrecht zu erhalten und zu beenden, mit einer oder mehreren Personen, Bekannten oder Fremden, in formeller oder informeller Form",
+                  "icon": "icf:d355",
+                  "question": "Wie gut können Sie Ihre Meinung in einer Diskussion vertreten – also Argumente für und gegen einen Standpunkt vorbringen?",
+                  "defaultIdx": 0
+                }
+              ],
+              "question": "Haben Sie Probleme, sich für 10 Minuten auf etwas zu konzentrieren?",
+              "reference": "WHODAS",
+              "questionType": "yesno",
+              "defaultIdx": 0
+            },
+            {
+              "id": "n6_7luy",
+              "type": "question",
+              "label": "Laufen",
+              "required": false,
+              "helpText": "",
+              "options": [
+                "Keine Probleme",
+                "Wenige Probleme",
+                "Einige Probleme",
+                "Starke Probleme",
+                "Sehr starke Probleme oder gar nicht möglich"
+              ],
+              "children": [
+                {
+                  "id": "n3_nz9i",
+                  "type": "icf",
+                  "label": "Gehen",
+                  "icfCode": "d450",
+                  "questionType": "single",
+                  "options": [
+                    "Keine Probleme",
+                    "Wenige Probleme",
+                    "Einige Probleme",
+                    "Starke Probleme",
+                    "Sehr starke Probleme oder gar nicht möglich"
+                  ],
+                  "helpText": "",
+                  "required": false,
+                  "subheading": "Sich zu Fuß auf einer Oberfläche Schritt für Schritt so fortzubewegen, dass stets wenigstens ein Fuß den Boden berührt, wie beim Spazieren, Schlendern, Vorwärts-, Rückwärts- oder Seitwärtsgehen",
+                  "icon": "icf:d450",
+                  "question": "Wie gut können Sie zu Fuß gehen – ohne Hilfsmittel und ohne Beschwerden oder Unsicherheit?",
+                  "defaultIdx": 0
+                },
+                {
+                  "id": "n3_3hl5",
+                  "type": "icf",
+                  "label": "Sich auf andere Weise fortbewegen",
+                  "icfCode": "d455",
+                  "questionType": "single",
+                  "options": [
+                    "Keine Probleme",
+                    "Wenige Probleme",
+                    "Einige Probleme",
+                    "Starke Probleme",
+                    "Sehr starke Probleme oder gar nicht möglich"
+                  ],
+                  "helpText": "",
+                  "required": false,
+                  "subheading": "Sich auf andere Weise als gehend von einem Ort zu einem anderen fortzubewegen, wie über einen Fels klettern oder eine Straße entlang rennen, springen, spurten, hüpfen, einen Purzelbaum schlagen oder um Hindernisse rennen",
+                  "icon": "icf:d455",
+                  "question": "Können Sie sich auf andere Weise als zu Fuß gehen fortbewegen – zum Beispiel rennen, springen oder klettern?",
+                  "defaultIdx": 0
+                },
+                {
+                  "id": "n9_bvbc",
+                  "type": "icf",
+                  "label": "Sich in verschiedenen Umgebungen fortbewegen",
+                  "icfCode": "d460",
+                  "questionType": "single",
+                  "options": [
+                    "Keine Probleme",
+                    "Wenige Probleme",
+                    "Einige Probleme",
+                    "Starke Probleme",
+                    "Sehr starke Probleme oder gar nicht möglich"
+                  ],
+                  "helpText": "",
+                  "required": false,
+                  "subheading": "In verschiedenen Orten und Situationen zu gehen und sich fortzubewegen, wie in einem Haus oder Gebäude von einem Raum in einen anderen gehen oder auf einer Straße einer Stadt gehen",
+                  "icon": "icf:d460",
+                  "question": "Wie gut können Sie sich in Ihrer eigenen Wohnung oder in Ihrem Haus selbstständig fortbewegen – zum Beispiel von Zimmer zu Zimmer gehen?",
+                  "defaultIdx": 0
+                }
+              ],
+              "question": "Haben Sie Probleme, eine längere Strecke (ca. einen Kilometer) zu Fuss zu gehen?",
+              "reference": "WHODAS",
+              "questionType": "yesno",
+              "defaultIdx": 0
+            },
+            {
+              "id": "n9_40z0",
+              "type": "question",
+              "label": "Waschen",
+              "required": false,
+              "helpText": "",
+              "options": [
+                "Keine Probleme",
+                "Wenige Probleme",
+                "Einige Probleme",
+                "Starke Probleme",
+                "Sehr starke Probleme oder gar nicht möglich"
+              ],
+              "children": [
+                {
+                  "id": "n6_b5ho",
+                  "type": "icf",
+                  "label": "Sich waschen",
+                  "icfCode": "d510",
+                  "questionType": "single",
+                  "options": [
+                    "Keine Probleme",
+                    "Wenige Probleme",
+                    "Einige Probleme",
+                    "Starke Probleme",
+                    "Sehr starke Probleme oder gar nicht möglich"
+                  ],
+                  "helpText": "",
+                  "required": false,
+                  "subheading": "Den ganzen Körper oder Körperteile mit Wasser und geeigneten Reinigungs- und Abtrocknungsmaterialien oder -methoden zu waschen und abzutrocknen, wie baden, duschen, Hände, Füße, Gesicht und Haare waschen und mit einem Handtuch abtrocknen",
+                  "icon": "icf:d510",
+                  "question": "Wie gut können Sie sich selbstständig waschen – zum Beispiel duschen, baden oder Körperteile wie Hände, Füße und Gesicht waschen?",
+                  "defaultIdx": 0
+                },
+                {
+                  "id": "n4_eu9n",
+                  "type": "icf",
+                  "label": "Seine Körperteile pflegen",
+                  "icfCode": "d520",
+                  "questionType": "single",
+                  "options": [
+                    "Keine Probleme",
+                    "Wenige Probleme",
+                    "Einige Probleme",
+                    "Starke Probleme",
+                    "Sehr starke Probleme oder gar nicht möglich"
+                  ],
+                  "helpText": "",
+                  "required": false,
+                  "subheading": "Sich um seine Körperteile wie Haut, Gesicht, Zähne, Kopfhaut, Nägel und Genitalien über das Waschen und Abtrocknen hinaus zu kümmern",
+                  "icon": "icf:d520",
+                  "question": "Wie gut können Sie sich selbstständig um Ihre Körperpflege kümmern – zum Beispiel Zähneputzen, Haare kämmen, Nägel schneiden oder die Haut eincremen?",
+                  "defaultIdx": 0
+                },
+                {
+                  "id": "n6_qgli",
+                  "type": "icf",
+                  "label": "Die Toilette benutzen",
+                  "icfCode": "d530",
+                  "questionType": "single",
+                  "options": [
+                    "Keine Probleme",
+                    "Wenige Probleme",
+                    "Einige Probleme",
+                    "Starke Probleme",
+                    "Sehr starke Probleme oder gar nicht möglich"
+                  ],
+                  "helpText": "",
+                  "required": false,
+                  "subheading": "Die Beseitigung menschlicher Ausscheidungen (Menstruationssekrete, Urin, Stuhl) zu planen und durchzuführen sowie sich anschließend zu reinigen",
+                  "icon": "icf:d530",
+                  "question": "Wie gut können Sie die Toilette selbstständig aufsuchen und nutzen?",
+                  "defaultIdx": 0
+                }
+              ],
+              "question": "Haben Sie Probleme, Ihren ganzen Körper zu waschen?",
+              "reference": "WHODAS",
+              "questionType": "yesno",
+              "defaultIdx": 0
+            },
+            {
+              "id": "n3_ilze",
+              "type": "question",
+              "label": "Anziehen",
+              "required": false,
+              "helpText": "",
+              "options": [
+                "Keine Probleme",
+                "Wenige Probleme",
+                "Einige Probleme",
+                "Starke Probleme",
+                "Sehr starke Probleme oder gar nicht möglich"
+              ],
+              "children": [
+                {
+                  "id": "n9_cfzg",
+                  "type": "icf",
+                  "label": "Sich kleiden",
+                  "icfCode": "d540",
+                  "questionType": "single",
+                  "options": [
+                    "Keine Probleme",
+                    "Wenige Probleme",
+                    "Einige Probleme",
+                    "Starke Probleme",
+                    "Sehr starke Probleme oder gar nicht möglich"
+                  ],
+                  "helpText": "",
+                  "required": false,
+                  "subheading": "Die koordinierten Handlungen und Aufgaben durchzuführen, welche das An- und Ausziehen von Kleidung und Schuhwerk in Abfolge und entsprechend den sozialen und klimatischen Bedingungen betreffen, wie Hemden, Röcke, Blusen, Hosen, Unterwäsche, Saris, Kimonos, Strumpfhosen, Hüte, Handschuhe, Mäntel, Schuhe, Stiefel, Sandalen oder Slipper anziehen, ordnen und ausziehen",
+                  "icon": "icf:d540",
+                  "question": "Wie gut können Sie sich selbstständig an- und ausziehen?",
+                  "defaultIdx": 0
+                }
+              ],
+              "question": "Haben Sie Probleme, sich anzuziehen?",
+              "reference": "WHODAS",
+              "questionType": "yesno",
+              "defaultIdx": 0
+            },
+            {
+              "id": "n9_ougj",
+              "type": "question",
+              "label": "Unterhalten",
+              "required": false,
+              "helpText": "",
+              "options": [
+                "Keine Probleme",
+                "Wenige Probleme",
+                "Einige Probleme",
+                "Starke Probleme",
+                "Sehr starke Probleme oder gar nicht möglich"
+              ],
+              "children": [
+                {
+                  "id": "n8_btgd",
+                  "type": "icf",
+                  "label": "Komplexe interpersonelle Interaktionen",
+                  "icfCode": "d720",
+                  "questionType": "single",
+                  "options": [
+                    "Keine Probleme",
+                    "Wenige Probleme",
+                    "Einige Probleme",
+                    "Starke Probleme",
+                    "Sehr starke Probleme oder gar nicht möglich"
+                  ],
+                  "helpText": "",
+                  "required": false,
+                  "subheading": "Die Interaktionen mit anderen in einer kontextuell und sozial angemessenen Weise aufrechtzuerhalten und zu handhaben, wie Gefühle und Impulse steuern, verbale und physische Aggressionen kontrollieren, bei sozialen Interaktionen unabhängig handeln und in Übereinstimmung mit sozialen Regeln und Konventionen handeln",
+                  "icon": "icf:d720",
+                  "question": "Wie gut gelingt es Ihnen, in schwierigen sozialen Situationen – zum Beispiel bei Konflikten oder Meinungsverschiedenheiten – ruhig und angemessen zu reagieren?",
+                  "defaultIdx": 0
+                },
+                {
+                  "id": "n1_9gdf",
+                  "type": "icf",
+                  "label": "Mit Fremden umgehen",
+                  "icfCode": "d730",
+                  "questionType": "single",
+                  "options": [
+                    "Keine Probleme",
+                    "Wenige Probleme",
+                    "Einige Probleme",
+                    "Starke Probleme",
+                    "Sehr starke Probleme oder gar nicht möglich"
+                  ],
+                  "helpText": "",
+                  "required": false,
+                  "subheading": "In befristeten Kontakten und Verbindungen mit Fremden zu bestimmten Zwecken zu stehen, wie beim Fragen nach einer Richtung oder einen Kauf tätigen",
+                  "icon": "icf:d730",
+                  "question": "Wie leicht fällt es Ihnen, fremde Menschen anzusprechen – zum Beispiel um nach dem Weg zu fragen oder etwas einzukaufen?",
+                  "defaultIdx": 0
+                },
+                {
+                  "id": "n3_l9vv",
+                  "type": "icf",
+                  "label": "Formelle Beziehungen",
+                  "icfCode": "d740",
+                  "questionType": "single",
+                  "options": [
+                    "Keine Probleme",
+                    "Wenige Probleme",
+                    "Einige Probleme",
+                    "Starke Probleme",
+                    "Sehr starke Probleme oder gar nicht möglich"
+                  ],
+                  "helpText": "",
+                  "required": false,
+                  "subheading": "Spezielle Beziehungen in formellen Rahmen aufzunehmen und aufrecht zu erhalten, wie mit Arbeitgebern, Fachleuten oder Dienstleistungserbringer",
+                  "icon": "icf:d740",
+                  "question": "Wie gut gelingt es Ihnen, mit Vorgesetzten, Behörden oder Fachleuten (z.B. Ärzten, Beratern) in Kontakt zu treten und professionell zu kommunizieren?",
+                  "defaultIdx": 0
+                }
+              ],
+              "question": "Haben Sie Probleme, sich mit fremden Personen zu unterhalten?",
+              "reference": "WHODAS",
+              "questionType": "yesno",
+              "defaultIdx": 0
+            },
+            {
+              "id": "n6_nr5k",
+              "type": "question",
+              "label": "Freundschaft",
+              "required": false,
+              "helpText": "",
+              "options": [
+                "Keine Probleme",
+                "Wenige Probleme",
+                "Einige Probleme",
+                "Starke Probleme",
+                "Sehr starke Probleme oder gar nicht möglich"
+              ],
+              "children": [
+                {
+                  "id": "n5_yjp3",
+                  "type": "icf",
+                  "label": "Informelle soziale Beziehungen",
+                  "icfCode": "d750",
+                  "questionType": "single",
+                  "options": [
+                    "Keine Probleme",
+                    "Wenige Probleme",
+                    "Einige Probleme",
+                    "Starke Probleme",
+                    "Sehr starke Probleme oder gar nicht möglich"
+                  ],
+                  "helpText": "",
+                  "required": false,
+                  "subheading": "Mit anderen Kontakte aufzunehmen, wie bei gelegentlichen Beziehungen mit Leuten, die in derselben Gemeinschaft oder am selben Wohnsitz leben, oder mit Mitarbeitern, Schülern und Studenten, Spielkameraden oder mit Menschen ähnlichen Hintergrundes oder Berufs",
+                  "icon": "icf:d750",
+                  "question": "Wie leicht fällt es Ihnen, mit Nachbarn, Bekannten oder Kollegen in lockerem Kontakt zu bleiben oder neue Bekanntschaften zu knüpfen?",
+                  "defaultIdx": 0
+                },
+                {
+                  "id": "n2_ahs2",
+                  "type": "icf",
+                  "label": "Intime Beziehungen",
+                  "icfCode": "d770",
+                  "questionType": "single",
+                  "options": [
+                    "Keine Probleme",
+                    "Wenige Probleme",
+                    "Einige Probleme",
+                    "Starke Probleme",
+                    "Sehr starke Probleme oder gar nicht möglich"
+                  ],
+                  "helpText": "",
+                  "required": false,
+                  "subheading": "Intime oder Liebesbeziehungen zwischen Individuen aufzubauen und aufrecht zu erhalten, wie zwischen Ehemann und -frau, sich Liebenden oder Sexualpartnern",
+                  "icon": "icf:d770",
+                  "question": "Wie erleben Sie Ihre Möglichkeiten, eine enge Partnerschaft oder Liebesbeziehung aufzubauen und zu pflegen?",
+                  "defaultIdx": 0
+                }
+              ],
+              "question": "Haben Sie Probleme, lange mit jemandem befreundet zu sein?",
+              "reference": "WHODAS",
+              "questionType": "yesno",
+              "defaultIdx": 0
+            },
+            {
+              "id": "n4_njxd",
+              "type": "question",
+              "label": "Arbeit",
+              "required": false,
+              "helpText": "",
+              "options": [
+                "Keine Probleme",
+                "Wenige Probleme",
+                "Einige Probleme",
+                "Starke Probleme",
+                "Sehr starke Probleme oder gar nicht möglich"
+              ],
+              "children": [
+                {
+                  "id": "n8_q39r",
+                  "type": "icf",
+                  "label": "Schulbildung",
+                  "icfCode": "d820",
+                  "questionType": "single",
+                  "options": [
+                    "Keine Probleme",
+                    "Wenige Probleme",
+                    "Einige Probleme",
+                    "Starke Probleme",
+                    "Sehr starke Probleme oder gar nicht möglich"
+                  ],
+                  "helpText": "",
+                  "required": false,
+                  "subheading": "Die Zulassung zu Schule und Bildung zu erlangen, an allen schulbezogenen Pflichten und Rechten teilzuhaben und die Lehrgangsstoffe, -inhalte und andere curriculare Anforderungen der Programme der Primar- und Sekundarstufenbildung zu erlernen einschließlich regelmäßig am Unterricht teilzunehmen, mit anderen Schülern zusammenzuarbeiten, Anweisungen der Lehrer zu befolgen, die zugewiesenen Aufgaben und Projekte zu organisieren, zu lernen und abzuschließen und zu anderen Stufen der Bildung fortzuschreiten",
+                  "icon": "icf:d820",
+                  "question": "Wie gut gelingt es Ihnen (oder dem Kind), regelmäßig am Schulunterricht teilzunehmen und dem Unterrichtsstoff zu folgen?",
+                  "defaultIdx": 0
+                },
+                {
+                  "id": "n5_e9vq",
+                  "type": "icf",
+                  "label": "Theoretische Berufsausbildung",
+                  "icfCode": "d825",
+                  "questionType": "single",
+                  "options": [
+                    "Keine Probleme",
+                    "Wenige Probleme",
+                    "Einige Probleme",
+                    "Starke Probleme",
+                    "Sehr starke Probleme oder gar nicht möglich"
+                  ],
+                  "helpText": "",
+                  "required": false,
+                  "subheading": "Sich an allen Aktivitäten von Programmen der beruflichen Ausbildung zu beteiligen und die curricularen Stoffe für die Vorbereitung der Beschäftigung in einem Gewerbe, auf einem Arbeitsplatz oder in einem Fachberuf zu lernen",
+                  "icon": "icf:d825",
+                  "question": "Wie gut gelingt es Ihnen, an Ihrer Berufsausbildung teilzunehmen und die geforderten Lerninhalte zu bewältigen?",
+                  "defaultIdx": 0
+                },
+                {
+                  "id": "n3_k6do",
+                  "type": "icf",
+                  "label": "Höhere Bildung und Ausbildung",
+                  "icfCode": "d830",
+                  "questionType": "single",
+                  "options": [
+                    "Keine Probleme",
+                    "Wenige Probleme",
+                    "Einige Probleme",
+                    "Starke Probleme",
+                    "Sehr starke Probleme oder gar nicht möglich"
+                  ],
+                  "helpText": "",
+                  "required": false,
+                  "subheading": "Sich an den Aktivitäten der weiterführenden Bildungs-/Ausbildungsprogramme an Universitäten, Fachhochschulen und Fachschulen zu beteiligen und alle curricularen Inhalte zu lernen, die für formale Grade, Diplome und andere Beglaubigungen erforderlich sind, wie einen Diplom- oder Promotionsstudiengang an einer Universität oder anderen anerkannten Fachbildungseinrichtung abschließen",
+                  "icon": "icf:d830",
+                  "question": "Wie gut können Sie an Ihrem Studium oder einer weiterführenden Ausbildung teilnehmen – z.B. Vorlesungen besuchen, Prüfungen ablegen und Abschlussarbeiten verfassen?",
+                  "defaultIdx": 0
+                },
+                {
+                  "id": "n9_vakx",
+                  "type": "icf",
+                  "label": "Vorbereitung auf Erwerbstätigkeit",
+                  "icfCode": "d840",
+                  "questionType": "single",
+                  "options": [
+                    "Keine Probleme",
+                    "Wenige Probleme",
+                    "Einige Probleme",
+                    "Starke Probleme",
+                    "Sehr starke Probleme oder gar nicht möglich"
+                  ],
+                  "helpText": "",
+                  "required": false,
+                  "subheading": "Sich an allen Programmen in Zusammenhang mit der Vorbereitung auf Beschäftigung zu beteiligen, wie die Aufgaben ausführen, die in Lehre, Praktika (einschließlich im Rahmen eines Hochschulstudiums) und ausbildungsbegleitendem Training gefordert werden",
+                  "icon": "icf:d840",
+                  "question": "Wie gut gelingt es Ihnen, an Maßnahmen zur Vorbereitung auf eine Arbeitsstelle teilzunehmen, z.B. Praktika, Trainingsmaßnahmen oder Bewerbungsvorbereitungen?",
+                  "defaultIdx": 0
+                },
+                {
+                  "id": "n6_uus1",
+                  "type": "icf",
+                  "label": "Eine Arbeit erhalten, behalten und beenden",
+                  "icfCode": "d845",
+                  "questionType": "single",
+                  "options": [
+                    "Keine Probleme",
+                    "Wenige Probleme",
+                    "Einige Probleme",
+                    "Starke Probleme",
+                    "Sehr starke Probleme oder gar nicht möglich"
+                  ],
+                  "helpText": "",
+                  "required": false,
+                  "subheading": "Eine Beschäftigung zu suchen, zu finden und auszuwählen, eine angebotene Arbeitsstelle anzunehmen, eine Anstellung, eine Gewerbetätigkeit, eine allgemeine oder eine gehobene berufliche Tätigkeit zu behalten und darin aufzusteigen sowie ein Arbeitsverhältnis in geeigneter Weise zu beenden",
+                  "icon": "icf:d845",
+                  "question": "Wie gut gelingt es Ihnen, sich auf Stellenangebote zu bewerben und eine Arbeitsstelle zu finden?",
+                  "defaultIdx": 0
+                },
+                {
+                  "id": "n8_t56v",
+                  "type": "icf",
+                  "label": "Bezahlte Tätigkeit",
+                  "icfCode": "d850",
+                  "questionType": "single",
+                  "options": [
+                    "Keine Probleme",
+                    "Wenige Probleme",
+                    "Einige Probleme",
+                    "Starke Probleme",
+                    "Sehr starke Probleme oder gar nicht möglich"
+                  ],
+                  "helpText": "",
+                  "required": false,
+                  "subheading": "Sich an allen Aspekten bezahlter Arbeit in Form von Beschäftigung, Gewerbetätigkeit, beruflicher Tätigkeit oder anderer Art von Erwerbstätigkeit zu beteiligen, als Angestellter, in Voll- oder Teilzeitbeschäftigung oder als Selbständiger, wie Arbeit suchen und eine Arbeitsstelle erhalten, die geforderten Aufgaben der Arbeitsstelle erfüllen, rechtzeitig bei der Arbeit erscheinen, andere Arbeitnehmer überwachen oder selbst überwacht werden sowie die geforderten Aufgaben allein oder in Gruppen erledigen",
+                  "icon": "icf:d850",
+                  "question": "Wie gut gelingt es Ihnen, Ihre beruflichen Aufgaben zu erfüllen und Ihren Arbeitsalltag zu bewältigen?",
+                  "defaultIdx": 0
+                },
+                {
+                  "id": "n4_05z1",
+                  "type": "icf",
+                  "label": "Unbezahlte Tätigkeit",
+                  "icfCode": "d855",
+                  "questionType": "single",
+                  "options": [
+                    "Keine Probleme",
+                    "Wenige Probleme",
+                    "Einige Probleme",
+                    "Starke Probleme",
+                    "Sehr starke Probleme oder gar nicht möglich"
+                  ],
+                  "helpText": "",
+                  "required": false,
+                  "subheading": "Sich an allen Aspekten der Voll- oder Teilzeitarbeit, für die eine Bezahlung nicht vorgesehen ist, zu beteiligen, einschließlich organisierter Arbeitsaktivitäten, die geforderten Aufgaben der Tätigkeit zu erfüllen, rechtzeitig bei der Arbeit zu erscheinen, andere Arbeitnehmer zu überwachen oder selbst überwacht zu werden sowie die geforderten Aufgaben allein oder in Gruppen zu erledigen, wie ehrenamtliche Tätigkeit, ohne Bezahlung für die Gemeinschaft, für religiöse Gruppen oder in der häuslichen Umgebung arbeiten",
+                  "icon": "icf:d855",
+                  "question": "Engagieren Sie sich ehrenamtlich oder in einer anderen unbezahlten Tätigkeit, und wie gut gelingt Ihnen das?",
+                  "defaultIdx": 0
+                },
+                {
+                  "id": "n8_dca8",
+                  "type": "icf",
+                  "label": "Elementare wirtschaftliche Transaktionen",
+                  "icfCode": "d860",
+                  "questionType": "single",
+                  "options": [
+                    "Keine Probleme",
+                    "Wenige Probleme",
+                    "Einige Probleme",
+                    "Starke Probleme",
+                    "Sehr starke Probleme oder gar nicht möglich"
+                  ],
+                  "helpText": "",
+                  "required": false,
+                  "subheading": "Sich an jeder Form einfacher wirtschaftlicher Transaktionen zu beteiligen, wie Geld zum Einkaufen von Nahrungsmitteln benutzen, Tauschhandel treiben, Güter oder Dienstleistungen austauschen oder Geld sparen",
+                  "icon": "icf:d860",
+                  "question": "Wie gut gelingt es Ihnen, alltägliche Geldgeschäfte zu erledigen, wie Einkaufen, Bezahlen oder Wechselgeld nachzählen?",
+                  "defaultIdx": 0
+                },
+                {
+                  "id": "n7_i97s",
+                  "type": "icf",
+                  "label": "Komplexe wirtschaftliche Transaktionen",
+                  "icfCode": "d865",
+                  "questionType": "single",
+                  "options": [
+                    "Keine Probleme",
+                    "Wenige Probleme",
+                    "Einige Probleme",
+                    "Starke Probleme",
+                    "Sehr starke Probleme oder gar nicht möglich"
+                  ],
+                  "helpText": "",
+                  "required": false,
+                  "subheading": "Sich an jeder Art von komplexen wirtschaftlichen Transaktionen zu beteiligen, die den Austausch von Kapital oder Eigentum und die Erzielung von Gewinn oder anderen wirtschaftlichen Werten beinhalten, wie ein Geschäft, eine Fabrik oder eine Ausstattung kaufen, ein Bankkonto unterhalten oder mit Gebrauchsgegenständen handeln",
+                  "icon": "icf:d865",
+                  "question": "Wie gut gelingt es Ihnen, komplexere Finanzangelegenheiten selbstständig zu regeln, z.B. ein Bankkonto zu führen, Verträge abzuschließen oder größere Anschaffungen zu planen?",
+                  "defaultIdx": 0
+                },
+                {
+                  "id": "n5_nimp",
+                  "type": "icf",
+                  "label": "Wirtschaftliche Eigenständigkeit",
+                  "icfCode": "d870",
+                  "questionType": "single",
+                  "options": [
+                    "Keine Probleme",
+                    "Wenige Probleme",
+                    "Einige Probleme",
+                    "Starke Probleme",
+                    "Sehr starke Probleme oder gar nicht möglich"
+                  ],
+                  "helpText": "",
+                  "required": false,
+                  "subheading": "Die Verfügungsgewalt über wirtschaftliche Ressourcen aus privaten oder öffentlichen Quellen zu haben, um die wirtschaftliche Sicherheit für den gegenwärtigen und zukünftigen Bedarf zu gewährleisten",
+                  "icon": "icf:d870",
+                  "question": "Wie gut gelingt es Ihnen, Ihre finanzielle Situation eigenständig zu sichern – sowohl für den aktuellen Bedarf als auch für die Zukunft?",
+                  "defaultIdx": 0
+                }
+              ],
+              "question": "Haben Sie Probleme auf der Arbeit oder in der Schule?",
+              "reference": "WHODAS",
+              "questionType": "yesno",
+              "defaultIdx": 0
+            }
+          ]
+        },
+        {
+          "id": "n4_3net",
+          "type": "section",
+          "label": "",
+          "required": false,
+          "helpText": "",
+          "options": [],
+          "children": [
+            {
+              "id": "n9_t3t2",
+              "type": "question",
+              "label": "Wohnung",
+              "required": false,
+              "helpText": "",
+              "options": [],
+              "children": [
+                {
+                  "id": "n5_dkox",
+                  "type": "question",
+                  "label": "Wohnungslos",
+                  "required": false,
+                  "helpText": "",
+                  "options": [
+                    "Ja (Miete oder Eigentum)",
+                    "Nein - ich lebe vorübergehend bei Freunden",
+                    "Nein - ich habe keine Unterkunft (obdachlos)"
+                  ],
+                  "children": [],
+                  "question": "Wohnen Sie und Ihre Angehörigen in einer gemieteten oder eigenen Wohnung oder Haus?",
+                  "reference": "ENV-Living",
+                  "questionType": "single",
+                  "defaultIdx": 0
+                },
+                {
+                  "id": "n1_epwb",
+                  "type": "question",
+                  "label": "Wohnungskosten",
+                  "required": false,
+                  "helpText": "",
+                  "options": [
+                    "Die Kosten belasten mich enorm",
+                    "Die Kosten belasten mich etwas",
+                    "Die Kosten belasten mich nicht"
+                  ],
+                  "children": [],
+                  "question": "Wie stark belasten Sie die monatlichen Kosten für Ihre Wohnung?",
+                  "reference": "EU-SILC-57",
+                  "questionType": "single",
+                  "defaultIdx": 2
+                },
+                {
+                  "id": "n7_47kn",
+                  "type": "question",
+                  "label": "Wohnungsqualität",
+                  "required": false,
+                  "helpText": "Hierzu zählen ein undichtes Dach, Schimmel, kaputte Fenster, Flure und Treppen oder eine nicht funktionierende Heizung",
+                  "options": [
+                    "Nein",
+                    "Wenige Schäden",
+                    "Viele Schäden / baufällige Wohnung"
+                  ],
+                  "children": [],
+                  "question": "Gibt es Schäden in Ihrer Wohnung?",
+                  "reference": "EU-SILC-66",
+                  "questionType": "single",
+                  "defaultIdx": 0
+                },
+                {
+                  "id": "n7_aez0",
+                  "type": "question",
+                  "label": "Wohnungsimmissionen",
+                  "required": false,
+                  "helpText": "Sind beispielsweise die Zimmer zu dunkel, Nachbarn oder die Straße zu laut, riecht es in ihrer Wohnung unangenehm?",
+                  "options": [
+                    "Nein",
+                    "Nein, aber es gibt kleinere Probleme",
+                    "Ja, aber ich halte das gut aus",
+                    "Ja - für mich ist das ein richtiges Problem"
+                  ],
+                  "children": [],
+                  "question": "Beeinträchtigen Sie die Licht-, Luft- oder Geräuschverhältnisse in ihrer Wohnung?",
+                  "reference": "EU-SILC-66",
+                  "questionType": "single",
+                  "defaultIdx": 0
+                }
+              ],
+              "question": "",
+              "reference": "ENV-Living",
+              "questionType": "single"
+            },
+            {
+              "id": "n4_o1bc",
+              "type": "question",
+              "label": "Materielle Sicherheit",
+              "required": false,
+              "helpText": "",
+              "options": [],
+              "children": [
+                {
+                  "id": "n4_9oje",
+                  "type": "question",
+                  "label": "Überschuldung",
+                  "required": false,
+                  "helpText": "Hierzu zählen Hypotheken, Miete, Kredite, Rechnung von Versorgungsbetrieben",
+                  "options": [
+                    "Ja, problemlos",
+                    "Ja, aber manchmal wird es knapp",
+                    "Manchmal habe ich schon das Zahlungsziel nicht einhalten können",
+                    "Selten oder nie"
+                  ],
+                  "children": [],
+                  "question": "Können Sie wiederkehrende Rechnungen rechtzeitig bezahlen?",
+                  "reference": "EU-SILC-58",
+                  "questionType": "single",
+                  "defaultIdx": 0
+                },
+                {
+                  "id": "n3_e9j7",
+                  "type": "question",
+                  "label": "Monatsende",
+                  "required": false,
+                  "helpText": "",
+                  "options": [
+                    "Ja, ganz entspannt",
+                    "Ja, problemlos",
+                    "Ja, meistens",
+                    "Naja, mit kleinen Schwierigkeiten",
+                    "Mit einigen Schwierigkeiten",
+                    "Kaum. Es gibt große Schwierigkeiten"
+                  ],
+                  "children": [],
+                  "question": "Reicht das Haushaltseinkommen bis zum Monatsende?",
+                  "reference": "EU-SILC-62",
+                  "questionType": "single",
+                  "defaultIdx": 0
+                },
+                {
+                  "id": "n5_8aon",
+                  "type": "question",
+                  "label": "Heizung",
+                  "required": false,
+                  "helpText": "",
+                  "options": [
+                    "Ja, problemlos",
+                    "Nein, ich friere häufig"
+                  ],
+                  "children": [],
+                  "question": "Können Sie es sich leisten, ihre Wohnung ausreichend zu heizen?",
+                  "reference": "EU-SILC-60",
+                  "questionType": "single",
+                  "defaultIdx": 0
+                },
+                {
+                  "id": "n3_p8a0",
+                  "type": "question",
+                  "label": "Urlaub",
+                  "required": false,
+                  "helpText": "",
+                  "options": [
+                    "Ja, problemlos",
+                    "Nein, dafür fehlt das Geld"
+                  ],
+                  "children": [],
+                  "question": "Können Sie es sich leisten, einmal im Jahr für eine Woche woanders Urlaub zu machen?",
+                  "reference": "EU-SILC-60",
+                  "questionType": "single",
+                  "defaultIdx": 0
+                },
+                {
+                  "id": "n4_fr4f",
+                  "type": "question",
+                  "label": "Unerwartete Ausgaben",
+                  "required": false,
+                  "helpText": "Neue Waschmaschine, Reparatur des Autos, Ausgaben von 1000-1500 Euro",
+                  "options": [
+                    "Ja, das geht",
+                    "Nein - dafür muss ich mir Geld borgen."
+                  ],
+                  "children": [],
+                  "question": "Können Sie unerwartete Ausgaben aus ihren eigenen Ressourcen stemmen?",
+                  "reference": "EU-SILC-60",
+                  "questionType": "single",
+                  "defaultIdx": 0
+                },
+                {
+                  "id": "n4_h9ks",
+                  "type": "question",
+                  "label": "Möbel",
+                  "required": false,
+                  "helpText": "",
+                  "options": [
+                    "Ja, problemlos",
+                    "Nein, dafür fehlt das Geld"
+                  ],
+                  "children": [],
+                  "question": "Können Sie kaputte oder abgenutzte Möbel ersetzen?",
+                  "reference": "EU-SILC-60",
+                  "questionType": "single",
+                  "defaultIdx": 0
+                },
+                {
+                  "id": "n8_r2f0",
+                  "type": "question",
+                  "label": "Kleidung",
+                  "required": false,
+                  "helpText": "",
+                  "options": [
+                    "Ja - zumindest könnte ich mir das leisten",
+                    "Nein - kann ich mir nicht leisten"
+                  ],
+                  "children": [],
+                  "question": "Können Sie es sich leisten, abgetragene Kleidung zu ersetzen?",
+                  "reference": "EU-SILC-285",
+                  "questionType": "single",
+                  "defaultIdx": 0
+                },
+                {
+                  "id": "n7_atwn",
+                  "type": "question",
+                  "label": "Schuhe",
+                  "required": false,
+                  "helpText": "",
+                  "options": [
+                    "Ja - zumindest könnte ich mir das leisten",
+                    "Nein - kann ich mir nicht leisten"
+                  ],
+                  "children": [],
+                  "question": "Haben Sie wenigstens 2 Paar gut passende Schuhe für den Alltagsgebrauch?",
+                  "reference": "EU-SILC-285",
+                  "questionType": "single",
+                  "defaultIdx": 0
+                },
+                {
+                  "id": "n1_7t76",
+                  "type": "question",
+                  "label": "Restaurant",
+                  "required": false,
+                  "helpText": "",
+                  "options": [
+                    "Ja - zumindest könnte ich mir das leisten",
+                    "Nein - kann ich mir nicht leisten"
+                  ],
+                  "children": [],
+                  "question": "Treffen Sie sich wenigstens einmal im Monat mit Verwandten/Bekannten/Freunden für einen Drink oder Restaurantbesuch?",
+                  "reference": "EU-SILC-285",
+                  "questionType": "single",
+                  "defaultIdx": 0
+                },
+                {
+                  "id": "n8_ot3o",
+                  "type": "question",
+                  "label": "Freizeit",
+                  "required": false,
+                  "helpText": "Das könnte zum Beispiel Freizeit- oder Vereinssport sein, Kinobesuche, Konzerte oder andere Hobbys.",
+                  "options": [
+                    "Ja - zumindest könnte ich mir das leisten",
+                    "Nein - kann ich mir nicht leisten"
+                  ],
+                  "children": [],
+                  "question": "Nehmen Sie regelmässig an Freizeitaktivitäten teil, auch wenn diese Geld kosten?",
+                  "reference": "EU-SILC-285",
+                  "questionType": "single",
+                  "defaultIdx": 0
+                },
+                {
+                  "id": "n5_6l16",
+                  "type": "question",
+                  "label": "Belohnung",
+                  "required": false,
+                  "helpText": "Zeitschriften, kleine Geschenke, Eis oder ähnliches",
+                  "options": [
+                    "Ja - zumindest könnte ich mir das leisten",
+                    "Nein - kann ich mir nicht leisten"
+                  ],
+                  "children": [],
+                  "question": "Können Sie sich einmal in der Woche etwas für sich selbst kaufen?",
+                  "reference": "EU-SILC-285",
+                  "questionType": "single",
+                  "defaultIdx": 0
+                },
+                {
+                  "id": "n7_yipg",
+                  "type": "question",
+                  "label": "Internetzugang",
+                  "required": false,
+                  "helpText": "",
+                  "options": [
+                    "Ja - zumindest könnte ich mir das leisten",
+                    "Nein - kann ich mir nicht leisten"
+                  ],
+                  "children": [],
+                  "question": "Haben Sie Internetzugang?",
+                  "reference": "EU-SILC-285",
+                  "questionType": "single",
+                  "defaultIdx": 0
+                }
+              ],
+              "question": "",
+              "reference": "ENV-Money",
+              "questionType": "single"
+            },
+            {
+              "id": "n6_v2bz",
+              "type": "question",
+              "label": "Wohnumfeld",
+              "required": false,
+              "helpText": "",
+              "options": [],
+              "children": [
+                {
+                  "id": "n9_l90t",
+                  "type": "question",
+                  "label": "Auto",
+                  "required": false,
+                  "helpText": "",
+                  "options": [
+                    "Ja - ich komme ganz gut woanders hin",
+                    "Nein - die Mobilität ist ein echtes Problem"
+                  ],
+                  "children": [],
+                  "question": "Hat Ihr Haushalt ein eigenes Auto oder haben Sie Zugang zu Carsharing oder zu einem gut funktionierenden ÖPNV?",
+                  "reference": "EU-SILC-59",
+                  "questionType": "single",
+                  "defaultIdx": 0
+                },
+                {
+                  "id": "n2_sizv",
+                  "type": "question",
+                  "label": "Umweltverschmutzung",
+                  "required": false,
+                  "helpText": "Zu Schmutz zählt sowohl eine außergewöhnliche Straßen- wie auch Luftverschmutzung.",
+                  "options": [
+                    "Ja",
+                    "Nein"
+                  ],
+                  "children": [],
+                  "question": "Ist ihre Wohnumgebung sauber?",
+                  "reference": "EU-SILC-67",
+                  "questionType": "single",
+                  "defaultIdx": 0
+                },
+                {
+                  "id": "n7_xhit",
+                  "type": "question",
+                  "label": "Kriminalität",
+                  "required": false,
+                  "helpText": "Es gibt keine Zeichen von Bandenkriminalität oder Vandalismus.",
+                  "options": [
+                    "Ja",
+                    "Nein"
+                  ],
+                  "children": [],
+                  "question": "Ist ihre Wohnumgebung friedlich?",
+                  "reference": "EU-SILC-67",
+                  "questionType": "single",
+                  "defaultIdx": 0
+                }
+              ],
+              "question": "",
+              "reference": "",
+              "questionType": "single"
+            },
+            {
+              "id": "n1_01l0",
+              "type": "question",
+              "label": "Gesundheitsversorgung",
+              "required": false,
+              "helpText": "",
+              "options": [],
+              "children": [],
+              "question": "",
+              "reference": "",
+              "questionType": "single"
+            },
+            {
+              "id": "n7_qltl",
+              "type": "question",
+              "label": "",
+              "required": false,
+              "helpText": "",
+              "options": [],
+              "children": [
+                {
+                  "id": "n4_pktw",
+                  "type": "question",
+                  "label": "Ernährungssicherheit",
+                  "required": false,
+                  "helpText": "",
+                  "options": [],
+                  "children": [
+                    {
+                      "id": "n6_ih6l",
+                      "type": "question",
+                      "label": "Ernährungssorgen",
+                      "required": false,
+                      "helpText": "",
+                      "options": [
+                        "Ja",
+                        "Nein"
+                      ],
+                      "children": [],
+                      "question": "Sie besorgt waren, nicht genug zu essen zu haben, weil Sie nicht genug Geld oder sonstige Ressourcen hatten",
+                      "reference": "FIES-WORRIED",
+                      "questionType": "single",
+                      "defaultIdx": 1
+                    },
+                    {
+                      "id": "n7_zee0",
+                      "type": "question",
+                      "label": "Ungesundes Essen",
+                      "required": false,
+                      "helpText": "",
+                      "options": [
+                        "Ja",
+                        "Nein"
+                      ],
+                      "children": [],
+                      "question": "Im Hinblick auf die letzten 12 Monate, gab es eine Zeit in der Sie sich nicht gesund und ausgewogen ernähren konnten, weil Sie nicht genug Geld oder sonstige Ressourcen hatten",
+                      "reference": "FIES-HEALTHY",
+                      "questionType": "single",
+                      "defaultIdx": 1
+                    },
+                    {
+                      "id": "n7_8ovf",
+                      "type": "question",
+                      "label": "Wenig Auswahl",
+                      "required": false,
+                      "helpText": "",
+                      "options": [
+                        "Ja",
+                        "Nein"
+                      ],
+                      "children": [],
+                      "question": "Sie aßen nur eine limitierte Auswahl an Lebensmitteln, weil Sie nicht genug Geld oder sonstige Ressourcen hatten",
+                      "reference": "FIES-FEWFOOD",
+                      "questionType": "single",
+                      "defaultIdx": 1
+                    },
+                    {
+                      "id": "n5_ibau",
+                      "type": "question",
+                      "label": "Mahlzeiten weglassen",
+                      "required": false,
+                      "helpText": "",
+                      "options": [
+                        "Ja",
+                        "Nein"
+                      ],
+                      "children": [],
+                      "question": "Sie mussten eine Mahlzeit auslassen, weil Sie nicht genug Geld oder sonstige Ressourcen hatten, um Essen zu kaufen",
+                      "reference": "FIES-SKIPPED",
+                      "questionType": "single",
+                      "defaultIdx": 1
+                    },
+                    {
+                      "id": "n3_y8xv",
+                      "type": "question",
+                      "label": "Kleinere Portionen",
+                      "required": false,
+                      "helpText": "",
+                      "options": [
+                        "Ja",
+                        "Nein"
+                      ],
+                      "children": [],
+                      "question": "Weiterhin in Hinsicht auf die letzten 12 Monate, gab es eine Zeit in der Sie weniger aßen als Sie Ihrer Ansicht nach essen sollten, weil Sie nicht genug Geld oder sonstige Ressourcen hatten",
+                      "reference": "FIES-ATELESS",
+                      "questionType": "single",
+                      "defaultIdx": 1
+                    },
+                    {
+                      "id": "n9_go0z",
+                      "type": "question",
+                      "label": "Leerer Kühlschrank",
+                      "required": false,
+                      "helpText": "",
+                      "options": [
+                        "Ja",
+                        "Nein"
+                      ],
+                      "children": [],
+                      "question": "Ihrem Haushalt gingen die Lebensmittel aus, weil Sie nicht genug Geld oder sonstige Ressourcen hatten",
+                      "reference": "FIES-RUNOUT",
+                      "questionType": "single",
+                      "defaultIdx": 1
+                    },
+                    {
+                      "id": "n4_ic4c",
+                      "type": "question",
+                      "label": "Hunger",
+                      "required": false,
+                      "helpText": "",
+                      "options": [
+                        "Ja",
+                        "Nein"
+                      ],
+                      "children": [],
+                      "question": "Sie waren hungrig, aßen aber nicht, weil Sie nicht genug Geld oder sonstige Ressourcen für Essen hatten",
+                      "reference": "FIES-HUNGRY",
+                      "questionType": "single",
+                      "defaultIdx": 1
+                    },
+                    {
+                      "id": "n7_u1cm",
+                      "type": "question",
+                      "label": "Tag ohne Mahlzeit",
+                      "required": false,
+                      "helpText": "",
+                      "options": [
+                        "Ja",
+                        "Nein"
+                      ],
+                      "children": [],
+                      "question": "Sie aßen einen ganzen Tag lang nichts, weil Sie nicht genug Geld oder sonstige Ressourcen hatten",
+                      "reference": "FIES-WHLDAY",
+                      "questionType": "single",
+                      "defaultIdx": 1
+                    }
+                  ],
+                  "question": "Jetzt habe Ich ein paar Fragen zu Ihrem Lebensmittelkonsum. Gab es in den letzten 12 Monaten Phasen, in denen ",
+                  "reference": "FIES",
+                  "questionType": "single"
+                }
+              ],
+              "question": "",
+              "reference": "",
+              "questionType": "single"
+            },
+            {
+              "id": "n6_wzit",
+              "type": "question",
+              "label": "Diskriminierung",
+              "required": false,
+              "helpText": "",
+              "options": [],
+              "children": [],
+              "question": "",
+              "reference": "",
+              "questionType": "single"
+            },
+            {
+              "id": "n5_9wz6",
+              "type": "question",
+              "label": "Öffentliche Einrichtungen",
+              "required": false,
+              "helpText": "",
+              "options": [],
+              "children": [],
+              "question": "",
+              "reference": "",
+              "questionType": "single"
+            },
+            {
+              "id": "n6_46ye",
+              "type": "question",
+              "label": "Soziale Kontakte",
+              "required": false,
+              "helpText": "",
+              "options": [],
+              "children": [],
+              "question": "",
+              "reference": "",
+              "questionType": "single"
+            },
+            {
+              "id": "n4_022q",
+              "type": "question",
+              "label": "Technik",
+              "required": false,
+              "helpText": "",
+              "options": [],
+              "children": [
+                {
+                  "id": "n7_cadv",
+                  "type": "question",
+                  "label": "Computer vorhanden?",
+                  "required": false,
+                  "helpText": "",
+                  "options": [
+                    "Ja",
+                    "Nein, weil wir uns das nicht leisten können",
+                    "Nein - aus anderen Gründen"
+                  ],
+                  "children": [],
+                  "question": "Gibt es in Ihrem Haushalt einen Computer (Notebook, PC oder Tablet)?",
+                  "reference": "EU-SILC-59",
+                  "questionType": "single",
+                  "defaultIdx": 0
+                }
+              ],
+              "question": "",
+              "reference": "",
+              "questionType": "single"
+            },
+            {
+              "id": "n4_7615",
+              "type": "question",
+              "label": "Spiritualität",
+              "required": false,
+              "helpText": "",
+              "options": [],
+              "children": [],
+              "question": "",
+              "reference": "",
+              "questionType": "single"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

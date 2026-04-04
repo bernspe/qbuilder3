@@ -1,0 +1,237 @@
+{
+  "exportedAt": "2026-04-03T19:53:52.796Z",
+  "variants": {
+    "main": {
+      "id": "main",
+      "label": "Original",
+      "nodes": [
+        {
+          "id": "n1_d1pc",
+          "type": "section",
+          "label": "Individuelle Behinderung",
+          "children": [
+            {
+              "id": "n3_7gnx",
+              "type": "question",
+              "label": "Stehen",
+              "questionType": "yesno",
+              "options": [
+                "Keine Probleme",
+                "Wenige Probleme",
+                "Einige Probleme",
+                "Starke Probleme",
+                "Sehr starke Probleme oder gar nicht möglich"
+              ],
+              "helpText": "Haben Sie Probleme, eine halbe Stunde oder länger zu stehen?",
+              "required": false,
+              "children": [
+                {
+                  "id": "n4_ecfo",
+                  "type": "icf",
+                  "label": "In einer Körperposition verbleiben",
+                  "icfCode": "d415",
+                  "questionType": "single",
+                  "options": [
+                    "Keine Probleme",
+                    "Wenige Probleme",
+                    "Einige Probleme",
+                    "Starke Probleme",
+                    "Sehr starke Probleme oder gar nicht möglich"
+                  ],
+                  "helpText": "",
+                  "required": false,
+                  "subheading": "In derselben erforderlichen Körperposition zu verbleiben, wie sitzen bleiben oder bei der Arbeit bzw. in der Schule stehen bleiben",
+                  "icon": "icf:d415",
+                  "question": "Wie gut können Sie stehen bleiben, wenn Sie zum Beispiel in einer Schlange warten oder bei der Arbeit länger stehen müssen?",
+                  "defaultIdx": 0
+                }
+              ],
+              "icon": "twemoji:man-standing",
+              "question": "Haben Sie Probleme, eine halbe Stunde oder länger zu stehen?",
+              "reference": "WHODAS"
+            },
+            {
+              "id": "n5_6wbj",
+              "type": "question",
+              "label": "Haushalt",
+              "questionType": "yesno",
+              "options": [],
+              "helpText": "",
+              "required": false,
+              "children": [
+                {
+                  "id": "n1_jvj6",
+                  "type": "icf",
+                  "label": "Waren und Dienstleistungen des täglichen Bedarfs beschaffen",
+                  "icon": "icf:d620",
+                  "icfCode": "d620",
+                  "subheading": "Alle Waren und Dienstleistungen des täglichen Bedarfs auszuwählen, zu beschaffen und zu transportieren, wie Lebensmittel, Getränke, Kleidung, Reinigungsmaterial, Brennstoff, Haushaltsartikel, Utensilien, Kochgeschirr, häusliche Hilfsmittel und Werkzeuge auswählen, beschaffen, transportieren und lagern; Versorgungs- und andere Dienstleistungen für den Haushalt beschaffen",
+                  "question": "Wie gut können Sie selbstständig einkaufen gehen – zum Beispiel Lebensmittel oder andere Dinge des täglichen Bedarfs besorgen?",
+                  "reference": "",
+                  "questionType": "single",
+                  "options": [
+                    "Keine Probleme",
+                    "Wenige Probleme",
+                    "Einige Probleme",
+                    "Starke Probleme",
+                    "Sehr starke Probleme oder gar nicht möglich"
+                  ],
+                  "helpText": "",
+                  "required": false,
+                  "defaultIdx": 0
+                },
+                {
+                  "id": "n3_5j8j",
+                  "type": "icf",
+                  "label": "Mahlzeiten vorbereiten",
+                  "icon": "icf:d630",
+                  "icfCode": "d630",
+                  "subheading": "Einfache und komplexe Mahlzeiten für sich selbst und andere zu planen, zu organisieren, zu kochen und anzurichten, wie ein Menü zubereiten, genießbare Lebensmittel und Getränke auswählen, Zutaten für die Vorbereitung der Mahlzeit zusammenstellen, mit Wärme kochen sowie kalte Speisen und Getränke vorbereiten und die Speisen servieren",
+                  "question": "Wie gut können Sie selbstständig Mahlzeiten zubereiten – von einfachen Speisen bis hin zu aufwändigeren Gerichten?",
+                  "reference": "",
+                  "questionType": "single",
+                  "options": [
+                    "Keine Probleme",
+                    "Wenige Probleme",
+                    "Einige Probleme",
+                    "Starke Probleme",
+                    "Sehr starke Probleme oder gar nicht möglich"
+                  ],
+                  "helpText": "",
+                  "required": false,
+                  "defaultIdx": null
+                },
+                {
+                  "id": "n4_l6do",
+                  "type": "icf",
+                  "label": "Hausarbeiten erledigen",
+                  "icon": "icf:d640",
+                  "icfCode": "d640",
+                  "subheading": "Einen Haushalt zu handhaben durch Reinigen des Hauses, Waschen von Kleidung, Benutzung von Haushaltsgeräten, Lagerung von Lebensmitteln, Entsorgung von Müll, wie fegen, moppen, Tische, Wände und andere Oberflächen reinigen; Haushaltsmüll zu sammeln und zu entsorgen; Zimmer, Toiletten und Schubladen in Ordnung zu halten; schmutzige Kleidung zu sammeln, zu waschen, zu trocknen, zusammenzulegen und zu bügeln; Schuhwerk zu reinigen; Besen, Bürsten und Staubsauger, Waschmaschinen, Trockner und Bügeleisen zu benutzen",
+                  "question": "Wie gut können Sie Ihren Haushalt selbstständig sauber und in Ordnung halten – zum Beispiel staubsaugen, wischen oder Wäsche waschen?",
+                  "reference": "",
+                  "questionType": "single",
+                  "options": [
+                    "Keine Probleme",
+                    "Wenige Probleme",
+                    "Einige Probleme",
+                    "Starke Probleme",
+                    "Sehr starke Probleme oder gar nicht möglich"
+                  ],
+                  "helpText": "",
+                  "required": false,
+                  "defaultIdx": null
+                },
+                {
+                  "id": "n5_zi8r",
+                  "type": "icf",
+                  "label": "Haushaltsgegenstände pflegen",
+                  "icon": "icf:d650",
+                  "icfCode": "d650",
+                  "subheading": "Haushalts- und andere persönliche Gegenstände, einschließlich Haus und dessen Inhalt, Kleidung, Fahrzeuge und Hilfsmittel, instand halten und instand setzen sowie sich um Pflanzen und Tiere kümmern, wie Räume anstreichen und tapezieren, Einrichtungsgegenstände befestigen, Wasserleitungen instand setzen, die Funktionsfähigkeit von Fahrzeugen sicherstellen, Pflanzen gießen, Haus- und Nutztiere pflegen und füttern",
+                  "question": "Wie gut können Sie Haushaltsgegenstände oder Ihre Wohnung selbstständig instand halten – zum Beispiel kleine Reparaturen durchführen, Pflanzen pflegen oder ein Haustier versorgen?",
+                  "reference": "",
+                  "questionType": "single",
+                  "options": [
+                    "Keine Probleme",
+                    "Wenige Probleme",
+                    "Einige Probleme",
+                    "Starke Probleme",
+                    "Sehr starke Probleme oder gar nicht möglich"
+                  ],
+                  "helpText": "",
+                  "required": false,
+                  "defaultIdx": null
+                },
+                {
+                  "id": "n6_e7il",
+                  "type": "icf",
+                  "label": "Anderen helfen",
+                  "icon": "icf:d660",
+                  "icfCode": "d660",
+                  "subheading": "Haushaltsmitgliedern und anderen beim Lernen, Kommunizieren, der Selbstversorgung, der (Fort-)Bewegung innerhalb und außerhalb des Hauses zu helfen; sich dem Wohlbefinden der Haushaltsmitglieder und anderer widmen",
+                  "question": "Wie gut können Sie anderen Menschen in Ihrem Umfeld helfen – zum Beispiel Familienangehörigen, Freunden oder Nachbarn?",
+                  "reference": "",
+                  "questionType": "single",
+                  "options": [
+                    "Keine Probleme",
+                    "Wenige Probleme",
+                    "Einige Probleme",
+                    "Starke Probleme",
+                    "Sehr starke Probleme oder gar nicht möglich"
+                  ],
+                  "helpText": "",
+                  "required": false,
+                  "defaultIdx": null
+                }
+              ],
+              "icon": "fluent:dishwasher-20-filled",
+              "question": "Haben Sie Probleme, Ihren Haushalt zu führen?",
+              "answerOrder": "schlecht-gut",
+              "reference": "WHODAS"
+            },
+            {
+              "id": "n1_0pk8",
+              "type": "question",
+              "label": "Lernen",
+              "icon": "",
+              "subheading": "Screeningfrage",
+              "question": "Haben Sie Probleme, neue Dinge zu lernen oder neue Aufgaben zu erfüllen?",
+              "reference": "WHODAS",
+              "questionType": "yesno",
+              "options": [],
+              "helpText": "",
+              "required": false,
+              "defaultIdx": null,
+              "answerOrder": "schlecht-gut",
+              "children": [
+                {
+                  "id": "n1_0qtb",
+                  "type": "icf",
+                  "label": "Sich Fertigkeiten aneignen",
+                  "icon": "icf:d155",
+                  "icfCode": "d155",
+                  "subheading": "Elementare und komplexe Fähigkeiten für integrierte Mengen von Handlungen und Aufgaben zu entwickeln, um die Aneignung einer Fertigkeit anzugehen und zu Ende zu bringen, wie Werkzeuge handhaben oder Spiele wie Schach spielen",
+                  "question": "Wie leicht fällt es Ihnen, neue Fertigkeiten zu erlernen – zum Beispiel den Umgang mit einem neuen Werkzeug oder das Erlernen eines neuen Spiels?",
+                  "reference": "",
+                  "questionType": "single",
+                  "options": [
+                    "Keine Probleme",
+                    "Wenige Probleme",
+                    "Einige Probleme",
+                    "Starke Probleme",
+                    "Sehr starke Probleme oder gar nicht möglich"
+                  ],
+                  "helpText": "",
+                  "required": false,
+                  "defaultIdx": null
+                },
+                {
+                  "id": "n2_4777",
+                  "type": "icf",
+                  "label": "Aufmerksamkeit fokussieren",
+                  "icon": "icf:d160",
+                  "icfCode": "d160",
+                  "subheading": "Sich absichtsvoll auf einen bestimmten Reiz zu konzentrieren, wie ablenkende Geräusche filtern",
+                  "question": "Wie gut gelingt es Ihnen, sich auf eine Sache zu konzentrieren und dabei Ablenkungen auszublenden?",
+                  "reference": "",
+                  "questionType": "single",
+                  "options": [
+                    "Keine Probleme",
+                    "Wenige Probleme",
+                    "Einige Probleme",
+                    "Starke Probleme",
+                    "Sehr starke Probleme oder gar nicht möglich"
+                  ],
+                  "helpText": "",
+                  "required": false,
+                  "defaultIdx": null
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

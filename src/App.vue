@@ -1,5 +1,6 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
+import { useRefHistory } from '@vueuse/core'
 import { useQuestionnaire } from './composables/useQuestionnaire.js'
 import { useToast } from './composables/useToast.js'
 import { VueDraggable } from 'vue-draggable-plus'
@@ -15,7 +16,84 @@ const { toasts, show: showToast } = useToast()
 const selectedId = ref(null)
 const showMerge = ref(false)
 const showImport = ref(false)
-const activeTab = ref('editor') // 'editor' | 'preview' | 'json'
+const activeTab = ref('editor')
+
+// ── JSON-Editor ────────────────────────────────────────────────────────────
+const jsonEditContent = ref('')
+const jsonParseError = ref('')
+const jsonTextareaRef = ref(null)
+const jsonScrollTop   = ref(0)
+const jsonStripeTopPx = ref(null)   // px vom Inhaltsbeginn (inkl. padding)
+const jsonStripeHtPx  = ref(0)
+let isApplyingJson = false
+
+// Mirror-Div-Technik: misst exakte Pixel-Y eines Zeichens inkl. Soft-Wraps
+function getCharOffsetTop(textarea, charPos) {
+  const cs  = getComputedStyle(textarea)
+  const div = document.createElement('div')
+  ;['fontFamily','fontSize','fontWeight','fontStyle','lineHeight',
+    'paddingTop','paddingRight','paddingBottom','paddingLeft',
+    'borderTopWidth','borderRightWidth','borderBottomWidth','borderLeftWidth',
+    'boxSizing','letterSpacing','tabSize'].forEach(p => { div.style[p] = cs[p] })
+  div.style.position    = 'absolute'
+  div.style.visibility  = 'hidden'
+  div.style.top         = '0'
+  div.style.left        = '0'
+  div.style.width       = textarea.clientWidth + 'px'
+  div.style.whiteSpace  = 'pre-wrap'
+  div.style.overflowWrap = 'break-word'
+  div.style.wordBreak   = 'normal'
+  div.style.height      = 'auto'
+  div.style.overflow    = 'hidden'
+  div.textContent = textarea.value.substring(0, charPos)
+  const span = document.createElement('span')
+  span.textContent = '\u200b'
+  div.appendChild(span)
+  document.body.appendChild(div)
+  const top = span.offsetTop
+  document.body.removeChild(div)
+  return top
+}
+
+// Findet { start, end } des Node-Objekts per ID im JSON-String,
+// eingeschränkt auf die aktuelle Variante damit geklonte IDs nicht zu
+// einer falschen Variante führen.
+function findNodeCharRange(json, nodeId, variantId) {
+  // Suche zuerst die Varianten-Sektion, dann die Node-ID darin
+  const variantKey = `"${variantId}": {`
+  const variantStart = json.indexOf(variantKey)
+  const searchFrom = variantStart >= 0 ? variantStart : 0
+  const searchStr = `"id": "${nodeId}"`
+  const pos = json.indexOf(searchStr, searchFrom)
+  if (pos < 0) return null
+  let depth = 0, start = pos
+  while (start > 0) {
+    start--
+    if (json[start] === '}') depth++
+    else if (json[start] === '{') { if (depth === 0) break; depth-- }
+  }
+  depth = 0
+  let end = start
+  while (end < json.length) {
+    if (json[end] === '{') depth++
+    else if (json[end] === '}') { depth--; if (depth === 0) { end++; break } }
+    end++
+  }
+  return { start, end, idPos: pos, searchStr }
+}
+
+// Stripe-Position relativ zur Wrapper-Oberkante (durch scrollTop verschoben)
+const jsonStripeStyle = computed(() => {
+  if (jsonStripeTopPx.value === null) return null
+  return {
+    top:    `${jsonStripeTopPx.value - jsonScrollTop.value}px`,
+    height: `${jsonStripeHtPx.value}px`
+  }
+})
+
+function syncJsonScroll(e) {
+  jsonScrollTop.value = e.target.scrollTop
+}
 
 qb.loadFromStorage()
 
@@ -33,13 +111,123 @@ const tabs = [
   { id: 'json', label: 'JSON' }
 ]
 
+// Sync JSON-Editor-Inhalt wenn Tab gewechselt oder Daten geändert werden
+watch(activeTab, (tab) => {
+  if (tab === 'json') jsonEditContent.value = jsonPreview.value
+})
+watch(jsonPreview, (val) => {
+  if (!isApplyingJson) jsonEditContent.value = val
+})
+
+function handleJsonInput() {
+  const raw = jsonEditContent.value
+  try {
+    const parsed = JSON.parse(raw)
+    if (!parsed.variants) { jsonParseError.value = 'Fehlende "variants"-Eigenschaft'; return }
+    jsonParseError.value = ''
+    isApplyingJson = true
+    Object.keys(qb.variants).forEach(k => delete qb.variants[k])
+    Object.assign(qb.variants, parsed.variants)
+    if (!qb.variants[qb.currentVariant.value]) {
+      qb.currentVariant.value = Object.keys(qb.variants)[0]
+    }
+    nextTick(() => { isApplyingJson = false })
+  } catch (err) {
+    jsonParseError.value = err.message
+  }
+}
+
+function handleJsonKeyDown(e) {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+    e.preventDefault(); doUndo()
+  }
+  if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
+    e.preventDefault(); doRedo()
+  }
+}
+
+// Scroll + Stripe beim Wechsel der selektierten Node oder des JSON-Tabs
+watch([selectedId, activeTab], async ([id, tab]) => {
+  if (tab !== 'json' || !id) {
+    jsonStripeTopPx.value = null
+    return
+  }
+  await nextTick()
+  const textarea = jsonTextareaRef.value
+  if (!textarea) return
+  const json = jsonEditContent.value
+  const range = findNodeCharRange(json, id, qb.currentVariant.value)
+  if (!range) { jsonStripeTopPx.value = null; return }
+
+  // Pixel-genaue Y-Positionen via Mirror-Div (inkl. Soft-Wraps)
+  const startY = getCharOffsetTop(textarea, range.start)
+  const endY   = getCharOffsetTop(textarea, range.end)
+  const lh = parseFloat(getComputedStyle(textarea).lineHeight) || 16.5
+  jsonStripeTopPx.value = startY
+  jsonStripeHtPx.value  = Math.max(lh, endY - startY + lh)
+
+  // Scroll so, dass der Block etwa 3 Zeilen vom oberen Rand erscheint
+  const scrollTop = Math.max(0, startY - lh * 3)
+  textarea.scrollTop   = scrollTop
+  jsonScrollTop.value  = scrollTop
+
+  try { textarea.setSelectionRange(range.idPos, range.idPos + range.searchStr.length) } catch (_) {}
+})
+
+// ── Undo/Redo ──────────────────────────────────────────────────────────────
+const snapshot = ref(JSON.stringify(qb.variants))
+let isUndoRedo = false
+
+watch(
+  () => JSON.stringify(qb.variants),
+  (val) => { if (!isUndoRedo) snapshot.value = val },
+  { deep: true }
+)
+
+const { undo: undoHistory, redo: redoHistory, canUndo, canRedo } =
+  useRefHistory(snapshot, { capacity: 50 })
+
+watch(snapshot, (val) => {
+  if (!isUndoRedo) return
+  const parsed = JSON.parse(val)
+  Object.keys(qb.variants).forEach(k => delete qb.variants[k])
+  Object.assign(qb.variants, parsed)
+})
+
+function doUndo() {
+  if (!canUndo.value) return
+  isUndoRedo = true
+  undoHistory()
+  nextTick(() => { isUndoRedo = false })
+}
+
+function doRedo() {
+  if (!canRedo.value) return
+  isUndoRedo = true
+  redoHistory()
+  nextTick(() => { isUndoRedo = false })
+}
+
+function handleKeyDown(e) {
+  if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return
+  if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+    e.preventDefault()
+    doUndo()
+  }
+  if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
+    e.preventDefault()
+    doRedo()
+  }
+}
+onMounted(() => document.addEventListener('keydown', handleKeyDown))
+onUnmounted(() => document.removeEventListener('keydown', handleKeyDown))
+// ──────────────────────────────────────────────────────────────────────────
+
 function selectNode(id) {
   selectedId.value = id
-  activeTab.value = 'editor'
 }
 
 function handleDelete(id) {
-  if (!confirm('Node und alle Unterelemente löschen?')) return
   qb.deleteNode(id)
   if (selectedId.value === id) selectedId.value = null
 }
@@ -51,12 +239,28 @@ function handleUpdate({ id, field, value }) {
 
 function handleAddChild({ type, parentId }) {
   const node = qb.addNode(type, parentId)
+  // Auto-fill subheading with parent's label
+  if (type === 'subquestion' && parentId) {
+    const parent = qb.findInVariant(parentId)
+    if (parent) node.subheading = parent.label
+  }
   selectedId.value = node.id
 }
 
 function handleAddRoot(type) {
   const node = qb.addNode(type, null)
-  selectedId.value = node.id
+  // Auto-create Screeningfrage when a new Abschnitt is added
+  if (type === 'section') {
+    const q = qb.addNode('question', node.id)
+    selectedId.value = q.id
+  } else {
+    selectedId.value = node.id
+  }
+}
+
+function handleDeleteVariant(id) {
+  if (!qb.deleteVariant(id)) return
+  showToast('Variante gelöscht')
 }
 
 function handleAddVariant() {
@@ -101,8 +305,10 @@ function doExport() {
       <h1>✦ Fragebogen-Editor</h1>
       <div class="btn-group" style="margin-left:12px">
         <button class="btn btn-sm" @click="handleAddRoot('section')">+ Abschnitt</button>
-        <button class="btn btn-sm" @click="handleAddRoot('question')">+ Screeningfrage</button>
-        <button class="btn btn-sm" @click="handleAddRoot('branch')">+ Verzweigung</button>
+      </div>
+      <div class="btn-group" style="margin-left:4px">
+        <button class="btn btn-sm" :disabled="!canUndo" @click="doUndo" title="Rückgängig (Strg+Z)">↩</button>
+        <button class="btn btn-sm" :disabled="!canRedo" @click="doRedo" title="Wiederholen (Strg+Y)">↪</button>
       </div>
       <div class="header-sep"></div>
       <div class="btn-group">
@@ -137,6 +343,7 @@ function doExport() {
             Noch keine Nodes.<br>Oben "+ Abschnitt" klicken.
           </div>
           <VueDraggable
+            v-if="qb.variants[qb.currentVariant.value]"
             v-model="qb.variants[qb.currentVariant.value].nodes"
             handle=".drag-handle"
             :animation="150"
@@ -174,7 +381,6 @@ function doExport() {
       <div class="panel">
         <div class="panel-body" style="padding:0">
 
-          <!-- Editor tab -->
           <template v-if="activeTab === 'editor'">
             <NodeEditor
               :node="selectedNode"
@@ -184,28 +390,46 @@ function doExport() {
             />
           </template>
 
-          <!-- Preview tab -->
           <template v-else-if="activeTab === 'preview'">
             <div style="padding:16px">
               <div class="info-box" style="margin-bottom:16px">
                 Vorschau aller Fragen in der aktuellen Variante (ohne Verzweigungslogik).
               </div>
-              <PreviewPanel :nodes="qb.nodes.value" />
+              <PreviewPanel :nodes="qb.nodes.value" :selected-id="selectedId" />
             </div>
           </template>
 
-          <!-- JSON tab -->
           <template v-else-if="activeTab === 'json'">
             <div style="padding:16px">
               <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
                 <span style="font-size:12px;color:var(--text2);font-weight:600">JSON EXPORT VORSCHAU</span>
                 <button class="btn btn-sm btn-primary" @click="doExport">↓ Herunterladen</button>
               </div>
-              <textarea
-                readonly
-                :value="jsonPreview"
-                style="font-family:monospace;font-size:11px;height:calc(100vh - 220px);width:100%;background:var(--bg2);color:var(--text);border:1px solid var(--border);border-radius:var(--radius);padding:12px;resize:none;"
-              ></textarea>
+              <div
+                v-if="jsonParseError"
+                data-testid="json-error"
+                style="margin-bottom:8px;padding:6px 10px;background:#fee2e2;color:#b91c1c;border-radius:var(--radius);font-size:12px;font-family:monospace"
+              >{{ jsonParseError }}</div>
+              <div class="json-editor-wrap">
+                <!-- Farbiger Stripe für den selektierten Node -->
+                <div
+                  v-if="jsonStripeStyle"
+                  class="json-node-stripe"
+                  aria-hidden="true"
+                  :style="jsonStripeStyle"
+                ></div>
+                <!-- Editierbare Textarea -->
+                <textarea
+                  ref="jsonTextareaRef"
+                  data-testid="json-editor"
+                  class="json-editor-textarea"
+                  v-model="jsonEditContent"
+                  @input="handleJsonInput"
+                  @keydown="handleJsonKeyDown"
+                  @scroll="syncJsonScroll"
+                  spellcheck="false"
+                ></textarea>
+              </div>
             </div>
           </template>
         </div>
@@ -223,12 +447,21 @@ function doExport() {
             :key="v.id"
             class="tree-item"
             :class="{ selected: v.id === qb.currentVariant.value }"
+            data-testid="variant-item"
             @click="qb.switchVariant(v.id)"
             style="margin-bottom:3px"
           >
             <span class="ti-icon">◈</span>
             <span class="ti-label">{{ v.label }}</span>
             <span style="font-size:10px;color:var(--text3)">{{ v.nodes?.length ?? 0 }} root</span>
+            <button
+              v-if="qb.variantList.value.length > 1"
+              class="btn btn-sm"
+              data-testid="delete-variant"
+              style="margin-left:auto;padding:1px 6px;font-size:11px;color:var(--danger,#b91c1c)"
+              @click.stop="handleDeleteVariant(v.id)"
+              title="Variante löschen"
+            >✕</button>
           </div>
         </div>
         <div class="panel-footer">
@@ -246,7 +479,7 @@ function doExport() {
     <!-- Status bar -->
     <div class="statusbar">
       <span>Variante: <strong>{{ qb.currentVariant.value }}</strong> · {{ qb.variantList.value.length }} Variante(n) insgesamt</span>
-      <span>Autosave aktiv · Vue 3 Composition API</span>
+      <span>Autosave · Undo/Redo: Strg+Z / Strg+Y</span>
     </div>
 
     <!-- Modals -->

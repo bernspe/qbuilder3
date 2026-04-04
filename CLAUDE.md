@@ -1,3 +1,3 @@
 - nutze für die Erstellung von Icons, Questions, Subquestions, ICF-Items Komponenten die Rules aus docs/ICONS_QUESTIONS_ICF.md
-- nutze VueUse für die Undo/Redo Funktionalität, siehe https://vueuse.org/core/useUndoHistory/
+- nutze VueUse für die Undo/Redo Funktionalität, VueUseCore useRefHistory
 - ignoriere das python directory

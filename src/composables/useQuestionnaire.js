@@ -45,9 +45,9 @@ export function useQuestionnaire() {
   function makeNode(type, label) {
     const base = { id: uid(), type, label }
     if (type === 'section') return { ...base, children: [] }
-    if (type === 'question') return { ...base, questionType: 'single', options: [], helpText: '', required: false, children: [] }
-    if (type === 'subquestion') return { ...base, questionType: 'single', options: [], helpText: '', required: false }
-    if (type === 'icf') return { ...base, icfCode: '', questionType: 'single', options: [], helpText: '', required: false }
+    if (type === 'question') return { ...base, icon: '', subheading: 'Screeningfrage', question: '', reference: '', questionType: 'yesno', options: [], helpText: '', required: false, defaultIdx: null, answerOrder: 'schlecht-gut', children: [] }
+    if (type === 'subquestion') return { ...base, icon: '', subheading: '', question: '', reference: '', questionType: 'single', options: [], helpText: '', required: false, defaultIdx: null, answerOrder: 'schlecht-gut' }
+    if (type === 'icf') return { ...base, icon: '', icfCode: '', subheading: '', question: '', reference: '', questionType: 'single', options: [], helpText: '', required: false, defaultIdx: null }
     if (type === 'branch') return { ...base, condition: '', branches: [{ label: 'Pfad A', children: [] }, { label: 'Pfad B', children: [] }] }
   }
 
@@ -89,6 +89,18 @@ export function useQuestionnaire() {
 
   function switchVariant(id) {
     if (variants[id]) currentVariant.value = id
+  }
+
+  function deleteVariant(id) {
+    const keys = Object.keys(variants)
+    if (keys.length <= 1) return false
+    if (!variants[id]) return false
+    if (currentVariant.value === id) {
+      const other = keys.find(k => k !== id)
+      currentVariant.value = other
+    }
+    delete variants[id]
+    return true
   }
 
   function mergeVariants(fromId, toId, newName) {
@@ -155,7 +167,7 @@ export function useQuestionnaire() {
   return {
     variants, currentVariant, nodes, variantList,
     findInVariant, addNode, deleteNode,
-    addVariant, switchVariant, mergeVariants,
+    addVariant, switchVariant, deleteVariant, mergeVariants,
     exportJSON, importJSON, countAll, loadFromStorage
   }
 }

@@ -1,5 +1,8 @@
 <script setup>
 import { computed } from 'vue'
+import IconDisplay from './IconDisplay.vue'
+import GradientAnswerButtons from './GradientAnswerButtons.vue'
+import { lookupIcf, getIcfAnswers } from '../composables/useIcfData.js'
 
 const props = defineProps({ node: Object })
 const emit = defineEmits(['update', 'delete', 'add-child'])
@@ -25,10 +28,35 @@ function removeBranchPath(i) {
   const branches = props.node.branches.filter((_, idx) => idx !== i)
   update('branches', branches)
 }
+
+// ICF: auto-populate on blur/Enter
+function applyIcfCode(code) {
+  const trimmed = code.trim().toLowerCase()
+  update('icfCode', trimmed)
+  const data = lookupIcf(trimmed)
+  if (data) {
+    update('label', data.name)
+    update('subheading', data.description)
+    update('icon', `icf:${trimmed}`)
+    update('options', getIcfAnswers(trimmed))
+    update('question', '')
+  }
+}
+
+const icfLookup = computed(() => props.node?.type === 'icf' ? lookupIcf(props.node.icfCode) : null)
+const icfAnswers = computed(() => getIcfAnswers(props.node?.icfCode))
+const icfColorScheme = computed(() => props.node?.icfCode?.toLowerCase().startsWith('e') ? 'environment' : 'restriction')
+
+const questionPreviewOptions = computed(() => {
+  if (!props.node) return []
+  if (props.node.questionType === 'yesno') return ['Ja', 'Nein']
+  if (props.node.questionType === 'scale') return ['1', '2', '3', '4', '5']
+  return []
+})
 </script>
 
 <template>
-  <div v-if="node" style="padding:16px">
+  <div v-if="node" style="padding:16px;overflow-y:auto;height:100%">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
       <span class="type-indicator" :class="'type-' + node.type">
         {{ typeIcon }} {{ typeLabel }}
@@ -37,44 +65,229 @@ function removeBranchPath(i) {
     </div>
 
     <div class="card">
-      <div class="field">
-        <label>Bezeichnung</label>
-        <input type="text" :value="node.label" @input="update('label', $event.target.value)" />
-      </div>
 
-      <!-- QUESTION / SUBQUESTION / ICF fields -->
-      <template v-if="['question', 'subquestion', 'icf'].includes(node.type)">
-        <div class="field" v-if="node.type === 'icf'">
+      <!-- ══ ICF-ITEM ══ -->
+      <template v-if="node.type === 'icf'">
+        <div class="field">
           <label>ICF-Code</label>
-          <input type="text" :value="node.icfCode ?? ''" @input="update('icfCode', $event.target.value)" placeholder="z.B. b1301" />
+          <input
+            type="text"
+            :value="node.icfCode ?? ''"
+            @change="applyIcfCode($event.target.value)"
+            placeholder="z.B. d415"
+          />
+          <div class="icf-links" style="margin-top:6px">
+            <a href="https://icfmapper.renecol.org" target="_blank" class="btn btn-ghost btn-sm">ICF Mapper ↗</a>
+            <a href="https://apps.who.int/classifications/icfbrowser/" target="_blank" class="btn btn-ghost btn-sm">WHO ICF Browser ↗</a>
+          </div>
         </div>
-        <div class="row">
-          <div class="field col">
-            <label>Fragetyp</label>
-            <select :value="node.questionType" @change="update('questionType', $event.target.value)">
-              <option value="single">Einfachauswahl</option>
-              <option value="multiple">Mehrfachauswahl</option>
-              <option value="text">Freitext</option>
-              <option value="scale">Skala (1–5)</option>
-              <option value="yesno">Ja / Nein</option>
-              <option value="date">Datum</option>
-              <option value="number">Zahl</option>
-            </select>
-          </div>
-          <div class="field" style="flex:0 0 auto;padding-top:22px">
-            <label class="checkbox-row">
-              <input type="checkbox" :checked="node.required" @change="update('required', $event.target.checked)" />
-              Pflichtfeld
-            </label>
-          </div>
+
+        <div v-if="node.icon" class="field">
+          <label>Icon (auto)</label>
+          <IconDisplay :icon="node.icon" :size="56" />
         </div>
 
         <div class="field">
-          <label>Hilfetext / Beschreibung</label>
+          <label>Heading (auto aus Mappingtabelle)</label>
+          <input type="text" :value="node.label" @input="update('label', $event.target.value)" />
+        </div>
+
+        <div class="field">
+          <label>Subheading / Beschreibung (auto)</label>
+          <textarea :value="node.subheading ?? ''" @input="update('subheading', $event.target.value)" rows="2"></textarea>
+        </div>
+
+        <div class="field">
+          <label>Fragetext</label>
+          <textarea
+            :value="node.question ?? ''"
+            @input="update('question', $event.target.value)"
+            rows="2"
+            placeholder="z.B. Wie stark haben Sie Schwierigkeiten mit ...?"
+          ></textarea>
+        </div>
+
+        <div v-if="icfLookup?.fragen?.length" class="field">
+          <label>Beispielfragen (klicken zum Übernehmen)</label>
+          <ul class="icf-suggestions">
+            <li v-for="(frage, i) in icfLookup.fragen" :key="i" @click="update('question', frage)">
+              {{ frage }}
+            </li>
+          </ul>
+        </div>
+
+        <div class="field">
+          <label>Antwortset ({{ node.icfCode?.toLowerCase().startsWith('e') ? 'Kapitel e' : 'Kapitel b/d/s' }})</label>
+          <GradientAnswerButtons
+            :options="icfAnswers"
+            :defaultIdx="node.defaultIdx"
+            :colorScheme="icfColorScheme"
+            :order="node.icfCode?.toLowerCase().startsWith('e') ? 'schlecht-gut' : 'gut-schlecht'"
+          />
+        </div>
+
+        <div class="field" v-if="icfAnswers.length">
+          <label>Vorausgewählte Antwort</label>
+          <select
+            :value="node.defaultIdx ?? ''"
+            @change="update('defaultIdx', $event.target.value === '' ? null : Number($event.target.value))"
+          >
+            <option value="">Keine Vorbelegung</option>
+            <option v-for="(ans, i) in icfAnswers" :key="i" :value="i">{{ i + 1 }}. {{ ans }}</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Referenz</label>
+          <input type="text" :value="node.reference ?? ''" @input="update('reference', $event.target.value)" placeholder="z.B. WHODAS Frage 1.1" />
+        </div>
+
+        <div class="field">
+          <label>Hilfetext</label>
+          <textarea :value="node.helpText ?? ''" @input="update('helpText', $event.target.value)" rows="2"></textarea>
+        </div>
+      </template>
+
+      <!-- ══ SCREENINGFRAGE ══ -->
+      <template v-else-if="node.type === 'question'">
+        <div class="field">
+          <label>Icon</label>
+          <div style="display:flex;align-items:center;gap:10px">
+            <input
+              type="text"
+              :value="node.icon ?? ''"
+              @input="update('icon', $event.target.value)"
+              placeholder="z.B. twemoji:man-standing"
+              style="flex:1"
+            />
+            <IconDisplay v-if="node.icon" :icon="node.icon" :size="36" />
+          </div>
+          <a href="https://icon-sets.iconify.design/" target="_blank" class="icon-search-link">Icons suchen auf icon-sets.iconify.design ↗</a>
+        </div>
+
+        <div class="field">
+          <label>Heading / Bezeichnung</label>
+          <input type="text" :value="node.label" @input="update('label', $event.target.value)" />
+        </div>
+
+        <div class="field">
+          <label>Subheading</label>
+          <input type="text" value="Screeningfrage" readonly style="opacity:0.45;cursor:default" />
+        </div>
+
+        <div class="field">
+          <label>Fragetext</label>
+          <textarea
+            :value="node.question ?? ''"
+            @input="update('question', $event.target.value)"
+            rows="2"
+            placeholder="z.B. Haben Sie Schwierigkeiten mit ...?"
+          ></textarea>
+        </div>
+
+        <div class="field">
+          <label>Referenz</label>
+          <input type="text" :value="node.reference ?? ''" @input="update('reference', $event.target.value)" placeholder="z.B. SF36 Frage 1" />
+        </div>
+
+        <div class="field">
+          <label>Fragetyp</label>
+          <select :value="node.questionType" @change="update('questionType', $event.target.value)">
+            <option value="yesno">Ja / Nein</option>
+            <option value="scale">Skala (1–5)</option>
+          </select>
+        </div>
+
+        <div v-if="node.questionType === 'scale'" class="field">
+          <label>Skala-Beschriftung</label>
+          <div class="row">
+            <input type="text" class="col" :value="node.scaleMin ?? ''" @input="update('scaleMin', $event.target.value)" placeholder="Min-Label" />
+            <input type="text" class="col" :value="node.scaleMax ?? ''" @input="update('scaleMax', $event.target.value)" placeholder="Max-Label" />
+          </div>
+        </div>
+
+        <div class="field" v-if="questionPreviewOptions.length">
+          <label>Antwortreihenfolge (Farbgradient)</label>
+          <div class="btn-group">
+            <button
+              class="btn btn-sm"
+              :class="{ 'btn-primary': (node.answerOrder ?? 'schlecht-gut') === 'schlecht-gut' }"
+              @click="update('answerOrder', 'schlecht-gut')"
+            >schlecht → gut</button>
+            <button
+              class="btn btn-sm"
+              :class="{ 'btn-primary': node.answerOrder === 'gut-schlecht' }"
+              @click="update('answerOrder', 'gut-schlecht')"
+            >gut → schlecht</button>
+          </div>
+        </div>
+
+        <div class="field" v-if="questionPreviewOptions.length">
+          <label>Vorschau Antworten</label>
+          <GradientAnswerButtons
+            :options="questionPreviewOptions"
+            :defaultIdx="node.defaultIdx"
+            colorScheme="restriction"
+            :order="node.answerOrder ?? 'schlecht-gut'"
+          />
+        </div>
+
+        <div class="field">
+          <label>Hilfetext</label>
           <textarea :value="node.helpText ?? ''" @input="update('helpText', $event.target.value)" rows="2"></textarea>
         </div>
 
-        <div class="field" v-if="['single', 'multiple'].includes(node.questionType)">
+        <div class="field" style="padding-top:2px">
+          <label class="checkbox-row">
+            <input type="checkbox" :checked="node.required" @change="update('required', $event.target.checked)" />
+            Pflichtfeld
+          </label>
+        </div>
+      </template>
+
+      <!-- ══ UNTERFRAGE ══ -->
+      <template v-else-if="node.type === 'subquestion'">
+        <div class="field">
+          <label>Icon</label>
+          <div style="display:flex;align-items:center;gap:10px">
+            <input
+              type="text"
+              :value="node.icon ?? ''"
+              @input="update('icon', $event.target.value)"
+              placeholder="z.B. twemoji:man-standing"
+              style="flex:1"
+            />
+            <IconDisplay v-if="node.icon" :icon="node.icon" :size="36" />
+          </div>
+          <a href="https://icon-sets.iconify.design/" target="_blank" class="icon-search-link">Icons suchen auf icon-sets.iconify.design ↗</a>
+        </div>
+
+        <div class="field">
+          <label>Heading / Bezeichnung</label>
+          <input type="text" :value="node.label" @input="update('label', $event.target.value)" />
+        </div>
+
+        <div class="field">
+          <label>Subheading (übergeordnete Screeningfrage)</label>
+          <input type="text" :value="node.subheading ?? ''" @input="update('subheading', $event.target.value)" />
+        </div>
+
+        <div class="field">
+          <label>Fragetext</label>
+          <textarea
+            :value="node.question ?? ''"
+            @input="update('question', $event.target.value)"
+            rows="2"
+            placeholder="z.B. Wie stark haben Sie Schwierigkeiten mit ...?"
+          ></textarea>
+        </div>
+
+        <div class="field">
+          <label>Referenz</label>
+          <input type="text" :value="node.reference ?? ''" @input="update('reference', $event.target.value)" placeholder="z.B. SF36 Frage 2" />
+        </div>
+
+        <div class="field">
           <label>Antwortoptionen (eine pro Zeile)</label>
           <textarea
             class="option-list-input"
@@ -85,17 +298,64 @@ function removeBranchPath(i) {
           ></textarea>
         </div>
 
-        <div class="field" v-if="node.questionType === 'scale'">
-          <label>Skala-Beschriftung</label>
-          <div class="row">
-            <input type="text" class="col" :value="node.scaleMin ?? '1 – stimme gar nicht zu'" @input="update('scaleMin', $event.target.value)" placeholder="Min-Label" />
-            <input type="text" class="col" :value="node.scaleMax ?? '5 – stimme voll zu'" @input="update('scaleMax', $event.target.value)" placeholder="Max-Label" />
+        <template v-if="(node.options ?? []).length">
+          <div class="field">
+            <label>Antwortreihenfolge (Farbgradient)</label>
+            <div class="btn-group">
+              <button
+                class="btn btn-sm"
+                :class="{ 'btn-primary': (node.answerOrder ?? 'schlecht-gut') === 'schlecht-gut' }"
+                @click="update('answerOrder', 'schlecht-gut')"
+              >schlecht → gut</button>
+              <button
+                class="btn btn-sm"
+                :class="{ 'btn-primary': node.answerOrder === 'gut-schlecht' }"
+                @click="update('answerOrder', 'gut-schlecht')"
+              >gut → schlecht</button>
+            </div>
           </div>
-        </div>
-      </template><!-- end question/subquestion/icf -->
 
-      <!-- BRANCH fields -->
-      <template v-if="node.type === 'branch'">
+          <div class="field">
+            <label>Vorausgewählte Antwort</label>
+            <select
+              :value="node.defaultIdx ?? ''"
+              @change="update('defaultIdx', $event.target.value === '' ? null : Number($event.target.value))"
+            >
+              <option value="">Keine Vorbelegung</option>
+              <option v-for="(opt, i) in (node.options ?? [])" :key="i" :value="i">{{ i + 1 }}. {{ opt }}</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label>Vorschau Antworten</label>
+            <GradientAnswerButtons
+              :options="node.options ?? []"
+              :defaultIdx="node.defaultIdx"
+              colorScheme="restriction"
+              :order="node.answerOrder ?? 'schlecht-gut'"
+            />
+          </div>
+        </template>
+
+        <div class="field">
+          <label>Hilfetext</label>
+          <textarea :value="node.helpText ?? ''" @input="update('helpText', $event.target.value)" rows="2"></textarea>
+        </div>
+
+        <div class="field" style="padding-top:2px">
+          <label class="checkbox-row">
+            <input type="checkbox" :checked="node.required" @change="update('required', $event.target.checked)" />
+            Pflichtfeld
+          </label>
+        </div>
+      </template>
+
+      <!-- ══ VERZWEIGUNG ══ -->
+      <template v-else-if="node.type === 'branch'">
+        <div class="field">
+          <label>Bezeichnung</label>
+          <input type="text" :value="node.label" @input="update('label', $event.target.value)" />
+        </div>
         <div class="field">
           <label>Bedingung / Logik-Beschreibung</label>
           <input type="text" :value="node.condition ?? ''" @input="update('condition', $event.target.value)" placeholder="z.B. Antwort auf Frage X = Ja" />
@@ -112,21 +372,25 @@ function removeBranchPath(i) {
         </div>
       </template>
 
-      <!-- SECTION note -->
-      <template v-if="node.type === 'section'">
+      <!-- ══ ABSCHNITT ══ -->
+      <template v-else-if="node.type === 'section'">
+        <div class="field">
+          <label>Bezeichnung</label>
+          <input type="text" :value="node.label" @input="update('label', $event.target.value)" />
+        </div>
         <div class="info-box">
           Ein Abschnitt gruppiert Fragen und Unterbereiche. Wähle diesen Abschnitt im Baum aus und nutze die Schaltflächen unten, um Inhalte hinzuzufügen.
         </div>
       </template>
-    </div>
 
-    <!-- Buttons für Screeningfragen-Children -->
+    </div><!-- end card -->
+
+    <!-- Add-Child Buttons -->
     <div v-if="node.type === 'question'" class="btn-group" style="margin-top:4px">
       <button class="btn" @click="emit('add-child', { type: 'subquestion', parentId: node.id })">+ Unterfrage</button>
       <button class="btn" @click="emit('add-child', { type: 'icf', parentId: node.id })">+ ICF-Item</button>
     </div>
 
-    <!-- Buttons für Abschnitt / Verzweigung / root -->
     <div v-else-if="['section', 'branch'].includes(node.type)" class="btn-group" style="margin-top:4px">
       <button class="btn" @click="emit('add-child', { type: 'question', parentId: node.id })">+ Screeningfrage</button>
       <button class="btn" @click="emit('add-child', { type: 'branch', parentId: node.id })">+ Verzweigung</button>

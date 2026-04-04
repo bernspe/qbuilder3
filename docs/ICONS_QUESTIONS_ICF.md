@@ -28,6 +28,7 @@ mit default_idx erfolgen. Die Buttons sollen farblich als gradient abgestuft sei
 #### ICF Item
 * Icon: Das spezifische Icon für das ICF Item, das unter {VITE_IMAGESERVER}/icf-pics/${code}.jpg abgelegt ist, wobei code eine icf ist, z.B. d415. Das Icon soll automatisch generiert werden, sobald der Code eingegeben wird, indem der Code in der URL für die ICF Icons eingesetzt wird.
 * Code: Der ICF Code, z.B. d415, wobei d für das Kapitel d der ICF steht.
+  * Es sollen hilfreiche Links zur Findung des ICF Codes angezeigt werden: https://icfmapper.renecol.org, https://apps.who.int/classifications/icfbrowser/
 * Heading: Der Name des ICF Items, z.B. "Stehen". =name aus der Mappingtabelle (assets/icf_codes_mit_fragen.json mit {code:{name,description, fragen}})
 * Subheading: =description aus der Mappingtabelle (assets/icf_codes_mit_fragen.json mit {code:{name,description, fragen}})
 * Question: Die eigentliche Frage, z.B. "Wie stark haben Sie Schwierigkeiten mit ... {ICF Name}?". Hier muss beachtet werden, dass nur die Kapitel d,b,s auf Einschränkungen abzielen. Im Kapitel e muss gefragt werden, wie star Einschränkungen oder Unterstützungen sind.

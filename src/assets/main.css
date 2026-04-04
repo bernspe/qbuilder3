@@ -313,13 +313,36 @@ textarea { resize: vertical; min-height: 64px; line-height: 1.5; }
 @keyframes toast-out { to { opacity:0; transform: translateX(-50%) translateY(8px); } }
 
 /* ── Preview panel ── */
+.preview-section-heading {
+  font-size: 13px; font-weight: 700;
+  color: var(--text2);
+  text-transform: uppercase; letter-spacing: 0.5px;
+  padding: 18px 0 6px;
+  margin-bottom: 4px;
+  border-bottom: 2px solid var(--border2);
+}
+.preview-section-heading:first-child { padding-top: 4px; }
+
 .preview-q {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 12px;
   margin-bottom: 10px;
   background: var(--bg2);
+  transition: border-color 0.15s, box-shadow 0.15s;
+  scroll-margin: 12px;
 }
+.preview-q--selected {
+  border-color: var(--blue-text);
+  box-shadow: 0 0 0 3px var(--blue-bg);
+  background: var(--bg);
+}
+/* Child items (subquestion, icf) get a left accent border */
+.preview-q--child {
+  border-left-width: 3px;
+}
+.preview-q--type-subquestion { border-left-color: var(--purple-text); }
+.preview-q--type-icf         { border-left-color: var(--teal-text); }
 .preview-q .q-label { font-size: 13px; font-weight: 500; margin-bottom: 8px; }
 .preview-q .q-help { font-size: 11px; color: var(--text3); margin-bottom: 8px; }
 .preview-q .q-required { color: var(--red-text); font-size: 10px; }
@@ -342,3 +365,109 @@ textarea { resize: vertical; min-height: 64px; line-height: 1.5; }
 .stat-label { font-size: 11px; color: var(--text3); }
 
 select option { background: var(--bg); color: var(--text); }
+
+/* ── Disabled buttons ── */
+button:disabled { opacity: 0.38; pointer-events: none; }
+
+/* ── Gradient answer buttons ── */
+.answer-btn-row { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+.answer-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 5px 11px;
+  border-radius: 20px;
+  border: 2px solid transparent;
+  font-size: 11px; font-weight: 500;
+  color: #fff;
+  cursor: default;
+  white-space: nowrap;
+  line-height: 1.4;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.25);
+  transition: transform 0.1s;
+}
+.answer-btn.selected {
+  border-color: rgba(0,0,0,0.35);
+  box-shadow: 0 0 0 3px rgba(0,0,0,0.12);
+  transform: scale(1.04);
+}
+
+/* ── Icon display ── */
+.icon-display {
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 8px; overflow: hidden; flex-shrink: 0;
+  background: #fff;
+  padding: 3px;
+  border: 1px solid rgba(0,0,0,0.10);
+}
+.icon-display img { display: block; }
+
+/* ── Preview panel enhancements ── */
+.preview-q-header { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 6px; }
+.preview-q-subheading { font-size: 11px; color: var(--text3); margin-top: 2px; }
+.preview-q-question { font-size: 13px; color: var(--text2); margin-bottom: 8px; font-style: italic; line-height: 1.4; }
+.preview-q-reference { font-size: 10px; color: var(--text3); margin-top: 8px; }
+
+/* ── ICF suggestions ── */
+.icf-suggestions { list-style: none; margin: 6px 0 0; padding: 0; }
+.icf-suggestions li {
+  font-size: 12px; color: var(--blue-text);
+  padding: 6px 10px; border-radius: var(--radius);
+  cursor: pointer; border: 1px solid var(--blue-border);
+  margin-bottom: 5px; background: var(--blue-bg);
+  line-height: 1.45;
+}
+.icf-suggestions li:hover { filter: brightness(0.95); }
+
+/* ── ICF link row ── */
+.icf-links { display: flex; gap: 6px; flex-wrap: wrap; }
+
+/* ── JSON-Editor Stripe-Highlighting ── */
+.json-editor-wrap {
+  position: relative;
+  height: calc(100vh - 220px);
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--bg2);
+}
+
+/* Farbiger Stripe hinter der Textarea */
+.json-node-stripe {
+  position: absolute;
+  left: 0;
+  right: 0;
+  background: rgba(234, 179, 8, 0.22);
+  pointer-events: none;
+  z-index: 0;
+}
+@media (prefers-color-scheme: dark) {
+  .json-node-stripe { background: rgba(250, 204, 21, 0.12); }
+}
+
+/* Textarea mit transparentem Hintergrund → Stripe scheint durch */
+.json-editor-textarea {
+  position: absolute;
+  inset: 0;
+  font-family: monospace;
+  font-size: 11px;
+  line-height: 1.5;
+  padding: 12px;
+  background: transparent;
+  color: var(--text);
+  border: none;
+  border-radius: var(--radius);
+  resize: none;
+  outline: none;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  z-index: 1;
+}
+.json-editor-wrap:focus-within { border-color: var(--border2); }
+
+/* ── Icon search link ── */
+.icon-search-link {
+  display: inline-block; margin-top: 5px;
+  font-size: 11px; color: var(--blue-text);
+  text-decoration: none;
+}
+.icon-search-link:hover { text-decoration: underline; }
