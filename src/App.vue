@@ -2,6 +2,7 @@
 import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { useRefHistory } from '@vueuse/core'
 import { useQuestionnaire } from './composables/useQuestionnaire.js'
+import { useGamification } from './composables/useGamification.js'
 import { useToast } from './composables/useToast.js'
 import { VueDraggable } from 'vue-draggable-plus'
 import TreeNode from './components/TreeNode.vue'
@@ -11,6 +12,7 @@ import MergeModal from './components/MergeModal.vue'
 import ImportModal from './components/ImportModal.vue'
 
 const qb = useQuestionnaire()
+const gamification = useGamification()
 const { toasts, show: showToast } = useToast()
 
 const selectedId = ref(null)
@@ -96,10 +98,39 @@ function syncJsonScroll(e) {
 }
 
 qb.loadFromStorage()
+gamification.loadRatingsFromStorage()
 
 const selectedNode = computed(() => {
   if (!selectedId.value) return null
   return qb.findInVariant(selectedId.value)
+})
+
+const baselineVariantId = computed(() => qb.variantList.value[0]?.id)
+const isMainVariant = computed(() => qb.currentVariant.value === baselineVariantId.value)
+
+const variantPoints = ref({})
+watch(
+  [() => qb.variants, gamification.ratings],
+  () => {
+    const result = {}
+    for (const v of qb.variantList.value) {
+      if (v.id !== baselineVariantId.value) {
+        result[v.id] = gamification.calculatePoints(qb.variants, v.id)
+      }
+    }
+    variantPoints.value = result
+  },
+  { deep: true, immediate: true }
+)
+
+const ratedNodeIds = computed(() => {
+  const id = qb.currentVariant.value
+  if (id === 'main') return new Set()
+  return new Set(
+    Object.entries(gamification.ratings[id] ?? {})
+      .filter(([, r]) => r.importance !== null && r.understandability !== null)
+      .map(([nodeId]) => nodeId)
+  )
 })
 
 const stats = computed(() => qb.countAll())
@@ -260,7 +291,30 @@ function handleAddRoot(type) {
 
 function handleDeleteVariant(id) {
   if (!qb.deleteVariant(id)) return
+  gamification.purgeVariantRatings(id)
   showToast('Variante gelöscht')
+}
+
+function handleRate({ nodeId, type, value }) {
+  if (isMainVariant.value) return
+  gamification.setRating(qb.currentVariant.value, nodeId, type, value)
+}
+
+const editingVariantId = ref(null)
+const editingVariantLabel = ref('')
+
+function startRenameVariant(id) {
+  editingVariantId.value = id
+  editingVariantLabel.value = qb.variants[id]?.label ?? ''
+}
+
+function confirmRenameVariant(id) {
+  qb.renameVariant(id, editingVariantLabel.value)
+  editingVariantId.value = null
+}
+
+function cancelRenameVariant() {
+  editingVariantId.value = null
 }
 
 function handleAddVariant() {
@@ -304,7 +358,7 @@ function doExport() {
     <header class="app-header">
       <h1>✦ Fragebogen-Editor</h1>
       <div class="btn-group" style="margin-left:12px">
-        <button class="btn btn-sm" @click="handleAddRoot('section')">+ Abschnitt</button>
+        <button class="btn btn-sm" :disabled="isMainVariant" @click="handleAddRoot('section')">+ Abschnitt</button>
       </div>
       <div class="btn-group" style="margin-left:4px">
         <button class="btn btn-sm" :disabled="!canUndo" @click="doUndo" title="Rückgängig (Strg+Z)">↩</button>
@@ -347,12 +401,16 @@ function doExport() {
             v-model="qb.variants[qb.currentVariant.value].nodes"
             handle=".drag-handle"
             :animation="150"
+            :disabled="isMainVariant"
           >
             <TreeNode
               v-for="element in qb.variants[qb.currentVariant.value].nodes"
               :key="element.id"
               :node="element"
               :selected-id="selectedId"
+              :rated-ids="ratedNodeIds"
+              :show-ratings="!isMainVariant"
+              :readonly="isMainVariant"
               @select="selectNode"
               @delete="handleDelete"
               @add-child="handleAddChild"
@@ -384,6 +442,7 @@ function doExport() {
           <template v-if="activeTab === 'editor'">
             <NodeEditor
               :node="selectedNode"
+              :readonly="isMainVariant"
               @update="handleUpdate"
               @delete="handleDelete"
               @add-child="handleAddChild"
@@ -395,7 +454,14 @@ function doExport() {
               <div class="info-box" style="margin-bottom:16px">
                 Vorschau aller Fragen in der aktuellen Variante (ohne Verzweigungslogik).
               </div>
-              <PreviewPanel :nodes="qb.nodes.value" :selected-id="selectedId" />
+              <PreviewPanel
+                :nodes="qb.nodes.value"
+                :selected-id="selectedId"
+                :variant-id="qb.currentVariant.value"
+                :is-main-variant="isMainVariant"
+                :ratings="gamification.ratings"
+                @rate="handleRate"
+              />
             </div>
           </template>
 
@@ -452,8 +518,32 @@ function doExport() {
             style="margin-bottom:3px"
           >
             <span class="ti-icon">◈</span>
-            <span class="ti-label">{{ v.label }}</span>
-            <span style="font-size:10px;color:var(--text3)">{{ v.nodes?.length ?? 0 }} root</span>
+            <template v-if="editingVariantId === v.id">
+              <input
+                data-testid="variant-name-input"
+                :value="editingVariantLabel"
+                @input="editingVariantLabel = $event.target.value"
+                @keydown.enter.stop="confirmRenameVariant(v.id)"
+                @keydown.escape.stop="cancelRenameVariant()"
+                @click.stop
+                style="font-size:12px;padding:1px 4px;width:100px"
+              />
+            </template>
+            <template v-else>
+              <span class="ti-label">{{ v.label }}</span>
+              <span v-if="v.id !== baselineVariantId" data-testid="variant-points" class="variant-points-badge">
+                {{ variantPoints[v.id] ?? 0 }} Pkt
+              </span>
+              <span style="font-size:10px;color:var(--text3)">{{ v.nodes?.length ?? 0 }} root</span>
+              <button
+                v-if="v.id !== baselineVariantId"
+                class="btn btn-sm"
+                data-testid="rename-variant"
+                style="padding:1px 6px;font-size:11px"
+                @click.stop="startRenameVariant(v.id)"
+                title="Variante umbenennen"
+              >✎</button>
+            </template>
             <button
               v-if="qb.variantList.value.length > 1"
               class="btn btn-sm"
@@ -478,7 +568,7 @@ function doExport() {
 
     <!-- Status bar -->
     <div class="statusbar">
-      <span>Variante: <strong>{{ qb.currentVariant.value }}</strong> · {{ qb.variantList.value.length }} Variante(n) insgesamt</span>
+      <span>Variante: <strong>{{ qb.variants[qb.currentVariant.value]?.label }}</strong> · {{ qb.variantList.value.length }} Variante(n) insgesamt</span>
       <span>Autosave · Undo/Redo: Strg+Z / Strg+Y</span>
     </div>
 

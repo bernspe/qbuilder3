@@ -114,13 +114,84 @@ describe('App – JSON-Tab editierbar', () => {
   })
 })
 
+// ─── Feature: Varianten umbenennen ───────────────────────────────────────────
+
+describe('App – Varianten umbenennen', () => {
+  it('zeigt keinen Umbenennen-Button für die erste (Baseline-)Variante', () => {
+    const wrapper = shallowMount(App)
+    // Mit nur einer Variante (der Baseline) darf kein Rename-Button existieren
+    expect(wrapper.find('[data-testid="rename-variant"]').exists()).toBe(false)
+  })
+
+  it('zeigt Umbenennen-Button für nicht-erste Varianten', async () => {
+    vi.stubGlobal('prompt', () => 'ZweiteVariante')
+    const wrapper = shallowMount(App)
+    const addBtn = wrapper.findAll('button').find(b => b.text() === '+ Neue')
+    await addBtn.trigger('click')
+    await wrapper.vm.$nextTick()
+    expect(wrapper.find('[data-testid="rename-variant"]').exists()).toBe(true)
+  })
+
+  it('zeigt Eingabefeld nach Klick auf Umbenennen', async () => {
+    vi.stubGlobal('prompt', () => 'ZweiteVariante')
+    const wrapper = shallowMount(App)
+    const addBtn = wrapper.findAll('button').find(b => b.text() === '+ Neue')
+    await addBtn.trigger('click')
+    await wrapper.vm.$nextTick()
+    await wrapper.find('[data-testid="rename-variant"]').trigger('click')
+    expect(wrapper.find('[data-testid="variant-name-input"]').exists()).toBe(true)
+  })
+
+  it('bestätigt Umbenennung mit Enter', async () => {
+    vi.stubGlobal('prompt', () => 'ZweiteVariante')
+    const wrapper = shallowMount(App)
+    const addBtn = wrapper.findAll('button').find(b => b.text() === '+ Neue')
+    await addBtn.trigger('click')
+    await wrapper.vm.$nextTick()
+    await wrapper.find('[data-testid="rename-variant"]').trigger('click')
+    const input = wrapper.find('[data-testid="variant-name-input"]')
+    await input.setValue('Mein Fragebogen')
+    await input.trigger('keydown', { key: 'Enter' })
+    await wrapper.vm.$nextTick()
+    const items = wrapper.findAll('[data-testid="variant-item"]')
+    expect(items.some(i => i.text().includes('Mein Fragebogen'))).toBe(true)
+    expect(wrapper.find('[data-testid="variant-name-input"]').exists()).toBe(false)
+  })
+
+  it('bricht Umbenennung mit Escape ab', async () => {
+    vi.stubGlobal('prompt', () => 'ZweiteVariante')
+    const wrapper = shallowMount(App)
+    const addBtn = wrapper.findAll('button').find(b => b.text() === '+ Neue')
+    await addBtn.trigger('click')
+    await wrapper.vm.$nextTick()
+    await wrapper.find('[data-testid="rename-variant"]').trigger('click')
+    const input = wrapper.find('[data-testid="variant-name-input"]')
+    await input.setValue('Verworfen')
+    await input.trigger('keydown', { key: 'Escape' })
+    await wrapper.vm.$nextTick()
+    expect(wrapper.find('[data-testid="variant-name-input"]').exists()).toBe(false)
+    expect(wrapper.findAll('[data-testid="variant-item"]').every(i => !i.text().includes('Verworfen'))).toBe(true)
+  })
+})
+
 // ─── Feature 3: JSON-Tab scrollt zur ausgewählten Node ───────────────────────
 
 describe('App – JSON-Tab Scroll bei TreeView-Navigation', () => {
+  async function setupNonBaselineVariant(wrapper) {
+    // Zweite Variante erstellen und aktivieren, damit "+ Abschnitt" nicht gesperrt ist
+    vi.stubGlobal('prompt', () => 'TestVariante')
+    const addVariantBtn = wrapper.findAll('button').find(b => b.text() === '+ Neue')
+    await addVariantBtn.trigger('click')
+    await wrapper.vm.$nextTick()
+    // Zweite Variante ist nach dem Erstellen automatisch aktiv
+  }
+
   it('scrollt im JSON-Tab zur Node-ID wenn eine Node selektiert ist', async () => {
     // Spy VOR dem Mount setzen, damit alle setSelectionRange-Aufrufe abgefangen werden
     const spy = vi.spyOn(HTMLTextAreaElement.prototype, 'setSelectionRange').mockImplementation(() => {})
     const wrapper = shallowMount(App)
+
+    await setupNonBaselineVariant(wrapper)
 
     // Abschnitt hinzufügen (setzt selectedId intern)
     const addSectionBtn = wrapper.findAll('button').find(b => b.text() === '+ Abschnitt')
@@ -140,6 +211,8 @@ describe('App – JSON-Tab Scroll bei TreeView-Navigation', () => {
   it('scrollt auch wenn erst Node selektiert, dann Tab gewechselt wird', async () => {
     const spy = vi.spyOn(HTMLTextAreaElement.prototype, 'setSelectionRange').mockImplementation(() => {})
     const wrapper = shallowMount(App)
+
+    await setupNonBaselineVariant(wrapper)
 
     // Zuerst Abschnitt hinzufügen (im Editor-Tab)
     const addSectionBtn = wrapper.findAll('button').find(b => b.text() === '+ Abschnitt')

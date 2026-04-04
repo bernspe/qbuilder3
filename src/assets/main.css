@@ -471,3 +471,49 @@ button:disabled { opacity: 0.38; pointer-events: none; }
   text-decoration: none;
 }
 .icon-search-link:hover { text-decoration: underline; }
+
+/* ── Gamification ─────────────────────────────────────────────────────────── */
+.variant-points-badge {
+  font-size: 10px; font-weight: 600;
+  padding: 1px 6px; border-radius: 10px;
+  background: var(--green-bg, #dcfce7); color: var(--green-text, #166534);
+  flex-shrink: 0;
+}
+.rating-check {
+  font-size: 11px; color: var(--text3); opacity: 0.35;
+  transition: color 0.15s, opacity 0.15s; flex-shrink: 0;
+}
+.rating-check--done { color: var(--green-text, #166534); opacity: 1; }
+.rating-section {
+  margin-top: 10px; padding-top: 8px;
+  border-top: 1px dashed var(--border);
+  display: flex; flex-direction: column; gap: 5px;
+}
+.rating-row { display: flex; align-items: center; gap: 8px; }
+.rating-label {
+  font-size: 10px; font-weight: 600; color: var(--text3);
+  text-transform: uppercase; letter-spacing: 0.4px;
+  width: 115px; flex-shrink: 0;
+}
+.star-row { display: flex; gap: 2px; }
+.star-btn {
+  background: none; border: none; padding: 2px 3px;
+  font-size: 16px; color: var(--text3); cursor: pointer;
+  line-height: 1; transition: color 0.1s, transform 0.1s; border-radius: 3px;
+}
+.star-btn:hover { color: #f59e0b; transform: scale(1.15); }
+.star-btn--active { color: #f59e0b; }
+.rating-value { font-size: 11px; color: var(--text2); min-width: 12px; }
+
+/* ── Read-only Variante ───────────────────────────────────────────────────── */
+.card--readonly {
+  pointer-events: none;
+  opacity: 0.6;
+  user-select: text;
+}
+.readonly-badge {
+  font-size: 10px; font-weight: 600;
+  padding: 2px 8px; border-radius: 10px;
+  background: var(--bg3); color: var(--text3);
+  border: 1px solid var(--border);
+}

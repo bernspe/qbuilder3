@@ -134,6 +134,34 @@ describe('deleteVariant', () => {
   })
 })
 
+describe('renameVariant', () => {
+  it('ändert das Label einer Variante', () => {
+    const qb = useQuestionnaire()
+    qb.renameVariant('main', 'Neuer Name')
+    expect(qb.variants['main'].label).toBe('Neuer Name')
+  })
+
+  it('gibt false zurück wenn die ID nicht existiert', () => {
+    const qb = useQuestionnaire()
+    expect(qb.renameVariant('nonexistent', 'Test')).toBe(false)
+  })
+
+  it('ändert nicht die ID oder die Nodes', () => {
+    const qb = useQuestionnaire()
+    qb.addNode('section', null)
+    qb.renameVariant('main', 'Umbenannt')
+    expect(qb.variants['main']).toBeDefined()
+    expect(qb.currentVariant.value).toBe('main')
+    expect(qb.nodes.value.length).toBe(1)
+  })
+
+  it('leerer Name wird abgelehnt', () => {
+    const qb = useQuestionnaire()
+    expect(qb.renameVariant('main', '')).toBe(false)
+    expect(qb.variants['main'].label).toBe('Original')
+  })
+})
+
 describe('makeNode – icf type', () => {
   it('has icon field defaulting to empty string', () => {
     const qb = useQuestionnaire()

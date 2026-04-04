@@ -4,7 +4,10 @@ import IconDisplay from './IconDisplay.vue'
 import GradientAnswerButtons from './GradientAnswerButtons.vue'
 import { lookupIcf, getIcfAnswers } from '../composables/useIcfData.js'
 
-const props = defineProps({ node: Object })
+const props = defineProps({
+  node: Object,
+  readonly: { type: Boolean, default: false }
+})
 const emit = defineEmits(['update', 'delete', 'add-child'])
 
 const typeIcon = computed(() => ({ section: '▸', question: '◉', subquestion: '○', icf: '⊞', branch: '⋱' }[props.node?.type] ?? ''))
@@ -61,10 +64,11 @@ const questionPreviewOptions = computed(() => {
       <span class="type-indicator" :class="'type-' + node.type">
         {{ typeIcon }} {{ typeLabel }}
       </span>
-      <button class="btn btn-danger btn-sm" @click="emit('delete', node.id)">Löschen</button>
+      <span v-if="readonly" class="readonly-badge">Nur lesen</span>
+      <button v-else class="btn btn-danger btn-sm" @click="emit('delete', node.id)">Löschen</button>
     </div>
 
-    <div class="card">
+    <div class="card" :class="{ 'card--readonly': readonly }">
 
       <!-- ══ ICF-ITEM ══ -->
       <template v-if="node.type === 'icf'">
@@ -386,16 +390,18 @@ const questionPreviewOptions = computed(() => {
     </div><!-- end card -->
 
     <!-- Add-Child Buttons -->
-    <div v-if="node.type === 'question'" class="btn-group" style="margin-top:4px">
-      <button class="btn" @click="emit('add-child', { type: 'subquestion', parentId: node.id })">+ Unterfrage</button>
-      <button class="btn" @click="emit('add-child', { type: 'icf', parentId: node.id })">+ ICF-Item</button>
-    </div>
+    <template v-if="!readonly">
+      <div v-if="node.type === 'question'" class="btn-group" style="margin-top:4px">
+        <button class="btn" @click="emit('add-child', { type: 'subquestion', parentId: node.id })">+ Unterfrage</button>
+        <button class="btn" @click="emit('add-child', { type: 'icf', parentId: node.id })">+ ICF-Item</button>
+      </div>
 
-    <div v-else-if="['section', 'branch'].includes(node.type)" class="btn-group" style="margin-top:4px">
-      <button class="btn" @click="emit('add-child', { type: 'question', parentId: node.id })">+ Screeningfrage</button>
-      <button class="btn" @click="emit('add-child', { type: 'branch', parentId: node.id })">+ Verzweigung</button>
-      <button v-if="node.type === 'section'" class="btn" @click="emit('add-child', { type: 'section', parentId: null })">+ Abschnitt</button>
-    </div>
+      <div v-else-if="['section', 'branch'].includes(node.type)" class="btn-group" style="margin-top:4px">
+        <button class="btn" @click="emit('add-child', { type: 'question', parentId: node.id })">+ Screeningfrage</button>
+        <button class="btn" @click="emit('add-child', { type: 'branch', parentId: node.id })">+ Verzweigung</button>
+        <button v-if="node.type === 'section'" class="btn" @click="emit('add-child', { type: 'section', parentId: null })">+ Abschnitt</button>
+      </div>
+    </template>
   </div>
 
   <div v-else class="editor-empty">

@@ -6,8 +6,22 @@ import { getIcfAnswers } from '../composables/useIcfData.js'
 
 const props = defineProps({
   nodes: Array,
-  selectedId: { type: String, default: null }
+  selectedId: { type: String, default: null },
+  variantId: { type: String, default: 'main' },
+  isMainVariant: { type: Boolean, default: true },
+  ratings: { type: Object, default: () => ({}) }
 })
+
+const emit = defineEmits(['rate'])
+
+function getNodeRating(nodeId, type) {
+  return props.ratings[props.variantId]?.[nodeId]?.[type] ?? null
+}
+
+function handleRate(nodeId, type, value) {
+  if (props.isMainVariant) return
+  emit('rate', { nodeId, type, value })
+}
 
 const QUESTION_TYPES = ['question', 'subquestion', 'icf']
 
@@ -118,6 +132,26 @@ watch(() => props.selectedId, async (id) => {
         </template>
 
         <div v-if="node.reference" class="preview-q-reference">Referenz: {{ node.reference }}</div>
+
+        <div v-if="!isMainVariant" class="rating-section">
+          <div v-for="{ key, label } in [
+            { key: 'importance', label: 'Wichtigkeit' },
+            { key: 'understandability', label: 'Verständlichkeit' }
+          ]" :key="key" class="rating-row">
+            <span class="rating-label">{{ label }}</span>
+            <div class="star-row">
+              <button
+                v-for="star in 5"
+                :key="star"
+                class="star-btn"
+                :class="{ 'star-btn--active': getNodeRating(node.id, key) >= star }"
+                @click="handleRate(node.id, key, star)"
+                :title="`${label}: ${star}`"
+              >★</button>
+            </div>
+            <span class="rating-value">{{ getNodeRating(node.id, key) ?? '–' }}</span>
+          </div>
+        </div>
       </div>
 
     </template>

@@ -1,7 +1,7 @@
 import { ref, computed, reactive, watch } from 'vue'
 
 export function useQuestionnaire() {
-  const variants = reactive({ main: { id: 'main', label: 'Haupt', nodes: [] } })
+  const variants = reactive({ main: { id: 'main', label: 'Original', nodes: [] } })
   const currentVariant = ref('main')
   let counter = 1
 
@@ -103,6 +103,13 @@ export function useQuestionnaire() {
     return true
   }
 
+  function renameVariant(id, newLabel) {
+    if (!variants[id]) return false
+    if (!newLabel || !newLabel.trim()) return false
+    variants[id].label = newLabel.trim()
+    return true
+  }
+
   function mergeVariants(fromId, toId, newName) {
     const fromNodes = JSON.parse(JSON.stringify(variants[fromId]?.nodes ?? []))
     const toNodes = JSON.parse(JSON.stringify(variants[toId]?.nodes ?? []))
@@ -167,7 +174,7 @@ export function useQuestionnaire() {
   return {
     variants, currentVariant, nodes, variantList,
     findInVariant, addNode, deleteNode,
-    addVariant, switchVariant, deleteVariant, mergeVariants,
+    addVariant, switchVariant, deleteVariant, renameVariant, mergeVariants,
     exportJSON, importJSON, countAll, loadFromStorage
   }
 }

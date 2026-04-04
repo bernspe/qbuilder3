@@ -3,6 +3,10 @@
     - icf: d415 -> d415.jpg, which is located at {VITE_IMAGESERVER}/icf-pics/d415.jpg
     - {iconset}:{icon}, which can be retrieved from the corresponding iconset, e.g. iconify:mdi-home -> mdi-home.svg from Iconify
     - svg: a string of svg code, which can be rendered as an inline svg
+    - https: a URL from which the image can be retrieved, e.g. https://example.com/icon.png
+ - upload of icons as image files:
+    - additional functionality to upload icons as image files, which will then be stored on the server and can be retrieved via a URL. This would allow users to use custom icons that are not available in the predefined icon sets. File size limited to 500 kB
+    - upload widget is accessible via a button in the question editing interface, which opens a file dialog for the user to select an image file from their device. Once the file is selected, it will be uploaded to the server and a URL will be generated for the uploaded icon and pasted in the icon input field.
 
 # Fragetypen
 #### Screeningfrage = question
