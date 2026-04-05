@@ -136,6 +136,15 @@ const ratedNodeIds = computed(() => {
 const stats = computed(() => qb.countAll())
 const jsonPreview = computed(() => qb.exportJSON())
 
+const ratingStats = computed(() => {
+  const variantId = qb.currentVariant.value
+  const total = stats.value.q + stats.value.sq + stats.value.icf
+  if (isMainVariant.value || total === 0) return null
+  const done = Object.values(gamification.ratings[variantId] ?? {})
+    .filter(r => r.importance !== null && r.understandability !== null).length
+  return { done, total, todo: total - done }
+})
+
 const tabs = [
   { id: 'editor', label: 'Editor' },
   { id: 'preview', label: 'Vorschau' },
@@ -309,7 +318,11 @@ function startRenameVariant(id) {
 }
 
 function confirmRenameVariant(id) {
-  qb.renameVariant(id, editingVariantLabel.value)
+  const newId = qb.renameVariant(id, editingVariantLabel.value)
+  if (newId === false) { showToast('Name bereits vergeben'); return }
+  if (typeof newId === 'string' && newId !== id) {
+    gamification.renameVariantRatings(id, newId)
+  }
   editingVariantId.value = null
 }
 
@@ -339,6 +352,59 @@ function handleImport({ raw, asVariant }) {
     selectedId.value = null
     showToast('Import erfolgreich')
   } catch (e) { alert('Ungültiges JSON: ' + e.message) }
+}
+
+// ── Server Storage ─────────────────────────────────────────────────────────
+
+const uploadServer = import.meta.env.VITE_UPLOAD_SERVER ?? ''
+
+async function saveVariantToServer() {
+  const variantId = qb.currentVariant.value
+  let serverVariants = []
+  try {
+    const res = await fetch(`${uploadServer}/php/get_variants.php`)
+    const data = await res.json()
+    serverVariants = data.variants ?? []
+  } catch (_) {
+    showToast('Server nicht erreichbar')
+    return
+  }
+
+  if (serverVariants.includes(variantId)) {
+    const ok = confirm(`Variante "${variantId}" ist auf dem Server bereits vorhanden. Überschreiben?`)
+    if (!ok) return
+  }
+
+  const singleExport = JSON.stringify({
+    exportedAt: new Date().toISOString(),
+    variants: { [variantId]: qb.variants[variantId] }
+  }, null, 2)
+
+  try {
+    const res = await fetch(`${uploadServer}/php/upload.php?filename=${encodeURIComponent(variantId)}.json`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: singleExport
+    })
+    const data = await res.json()
+    if (!res.ok || data.error) throw new Error(data.error || 'Speichern fehlgeschlagen')
+    showToast('Auf Server gespeichert ✓')
+  } catch (err) {
+    showToast('Fehler: ' + err.message)
+  }
+}
+
+async function loadOriginalFromServer() {
+  try {
+    const res = await fetch(`${uploadServer}/php/get_original.php`)
+    if (!res.ok) throw new Error('Original nicht gefunden (HTTP ' + res.status + ')')
+    const raw = await res.text()
+    qb.importJSON(raw, 'original')
+    selectedId.value = null
+    showToast('Original geladen')
+  } catch (err) {
+    showToast('Fehler: ' + err.message)
+  }
 }
 
 function doExport() {
@@ -421,15 +487,33 @@ function doExport() {
           <div class="stats-row">
             <div class="stat">
               <div class="stat-val">{{ stats.s }}</div>
-              <div class="stat-label">Abschnitte</div>
+              <div class="stat-label">Abschn.</div>
             </div>
             <div class="stat">
               <div class="stat-val">{{ stats.q }}</div>
               <div class="stat-label">Fragen</div>
             </div>
             <div class="stat">
-              <div class="stat-val">{{ stats.b }}</div>
-              <div class="stat-label">Verzweigungen</div>
+              <div class="stat-val">{{ stats.sq }}</div>
+              <div class="stat-label">Unterfr.</div>
+            </div>
+            <div class="stat">
+              <div class="stat-val">{{ stats.icf }}</div>
+              <div class="stat-label">ICF</div>
+            </div>
+          </div>
+          <div v-if="ratingStats" class="stats-row" style="margin-top:6px;border-top:1px solid var(--border);padding-top:6px">
+            <div class="stat">
+              <div class="stat-val" style="color:var(--success,#16a34a)">{{ ratingStats.done }}</div>
+              <div class="stat-label">bewertet</div>
+            </div>
+            <div class="stat">
+              <div class="stat-val" style="color:var(--text3)">{{ ratingStats.todo }}</div>
+              <div class="stat-label">ausstehend</div>
+            </div>
+            <div class="stat">
+              <div class="stat-val">{{ ratingStats.total }}</div>
+              <div class="stat-label">gesamt</div>
             </div>
           </div>
         </div>
@@ -553,14 +637,19 @@ function doExport() {
               title="Variante löschen"
             >✕</button>
           </div>
+          <!-- Server-Aktionen -->
+          <div style="margin-top:12px;display:flex;flex-direction:column;gap:6px">
+            <button class="btn btn-sm btn-primary" @click="saveVariantToServer">↑ Auf Server speichern</button>
+            <button class="btn btn-sm" @click="loadOriginalFromServer">↓ Original laden</button>
+          </div>
         </div>
         <div class="panel-footer">
           <div style="font-size:11px;color:var(--text3);line-height:1.6">
             <strong style="color:var(--text2)">Workflow:</strong><br>
-            1. Basis exportieren<br>
-            2. Kolleg:in importiert als neue Variante<br>
-            3. Überarbeitete Version exportieren<br>
-            4. Mit "⇄ Zusammenführen" zusammenführen
+            1. Original laden, leeres Template löschen<br>
+            2. Neue Variante anlegen und mit einem einmaligen Namen versehen<br>
+            3. Variante bearbeiten<br>
+            4. Variante Auf Server speichern
           </div>
         </div>
       </div>

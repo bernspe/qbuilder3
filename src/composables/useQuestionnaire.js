@@ -105,9 +105,14 @@ export function useQuestionnaire() {
 
   function renameVariant(id, newLabel) {
     if (!variants[id]) return false
-    if (!newLabel || !newLabel.trim()) return false
-    variants[id].label = newLabel.trim()
-    return true
+    const trimmed = newLabel?.trim()
+    if (!trimmed) return false
+    if (trimmed === id) return true
+    if (variants[trimmed]) return false  // Name bereits vergeben
+    variants[trimmed] = { ...variants[id], id: trimmed, label: trimmed }
+    delete variants[id]
+    if (currentVariant.value === id) currentVariant.value = trimmed
+    return trimmed  // gibt neue id zurück
   }
 
   function mergeVariants(fromId, toId, newName) {
@@ -142,15 +147,17 @@ export function useQuestionnaire() {
   }
 
   function countAll(list = nodes.value) {
-    let s = 0, q = 0, b = 0
+    let s = 0, q = 0, sq = 0, icf = 0, b = 0
     for (const n of list) {
       if (n.type === 'section') s++
       else if (n.type === 'question') q++
+      else if (n.type === 'subquestion') sq++
+      else if (n.type === 'icf') icf++
       else if (n.type === 'branch') b++
-      if (n.children) { const c = countAll(n.children); s += c.s; q += c.q; b += c.b }
-      if (n.branches) { for (const br of n.branches) { if (br.children) { const c = countAll(br.children); s += c.s; q += c.q; b += c.b } } }
+      if (n.children) { const c = countAll(n.children); s += c.s; q += c.q; sq += c.sq; icf += c.icf; b += c.b }
+      if (n.branches) { for (const br of n.branches) { if (br.children) { const c = countAll(br.children); s += c.s; q += c.q; sq += c.sq; icf += c.icf; b += c.b } } }
     }
-    return { s, q, b }
+    return { s, q, sq, icf, b }
   }
 
   function saveToStorage() {

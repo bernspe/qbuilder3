@@ -135,10 +135,22 @@ describe('deleteVariant', () => {
 })
 
 describe('renameVariant', () => {
-  it('ändert das Label einer Variante', () => {
+  it('migriert id und label auf den neuen Namen', () => {
     const qb = useQuestionnaire()
-    qb.renameVariant('main', 'Neuer Name')
-    expect(qb.variants['main'].label).toBe('Neuer Name')
+    const newId = qb.renameVariant('main', 'Neuer Name')
+    expect(newId).toBe('Neuer Name')
+    expect(qb.variants['Neuer Name']).toBeDefined()
+    expect(qb.variants['Neuer Name'].id).toBe('Neuer Name')
+    expect(qb.variants['Neuer Name'].label).toBe('Neuer Name')
+    expect(qb.variants['main']).toBeUndefined()
+  })
+
+  it('aktualisiert currentVariant wenn die aktive Variante umbenannt wird', () => {
+    const qb = useQuestionnaire()
+    qb.addNode('section', null)
+    qb.renameVariant('main', 'Umbenannt')
+    expect(qb.currentVariant.value).toBe('Umbenannt')
+    expect(qb.nodes.value.length).toBe(1)
   })
 
   it('gibt false zurück wenn die ID nicht existiert', () => {
@@ -146,13 +158,16 @@ describe('renameVariant', () => {
     expect(qb.renameVariant('nonexistent', 'Test')).toBe(false)
   })
 
-  it('ändert nicht die ID oder die Nodes', () => {
+  it('gibt false zurück wenn der neue Name bereits vergeben ist', () => {
     const qb = useQuestionnaire()
-    qb.addNode('section', null)
-    qb.renameVariant('main', 'Umbenannt')
+    qb.addVariant('andere')
+    expect(qb.renameVariant('main', 'andere')).toBe(false)
+  })
+
+  it('gibt true zurück wenn Name unverändert bleibt', () => {
+    const qb = useQuestionnaire()
+    expect(qb.renameVariant('main', 'main')).toBe(true)
     expect(qb.variants['main']).toBeDefined()
-    expect(qb.currentVariant.value).toBe('main')
-    expect(qb.nodes.value.length).toBe(1)
   })
 
   it('leerer Name wird abgelehnt', () => {

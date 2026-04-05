@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import IconDisplay from './IconDisplay.vue'
 import GradientAnswerButtons from './GradientAnswerButtons.vue'
 import { lookupIcf, getIcfAnswers } from '../composables/useIcfData.js'
@@ -49,6 +49,36 @@ function applyIcfCode(code) {
 const icfLookup = computed(() => props.node?.type === 'icf' ? lookupIcf(props.node.icfCode) : null)
 const icfAnswers = computed(() => getIcfAnswers(props.node?.icfCode))
 const icfColorScheme = computed(() => props.node?.icfCode?.toLowerCase().startsWith('e') ? 'environment' : 'restriction')
+
+const iconFileInput = ref(null)
+const iconUploading = ref(false)
+const iconUploadError = ref('')
+
+const uploadServer = import.meta.env.VITE_UPLOAD_SERVER ?? ''
+
+async function handleIconFileSelected(event) {
+  const file = event.target.files[0]
+  if (!file) return
+  iconUploadError.value = ''
+  event.target.value = ''
+  if (file.size > 500 * 1024) {
+    iconUploadError.value = 'Datei zu groß (max. 500 kB)'
+    return
+  }
+  iconUploading.value = true
+  try {
+    const formData = new FormData()
+    formData.append('file', file)
+    const res = await fetch(`${uploadServer}/php/upload.php`, { method: 'POST', body: formData })
+    const data = await res.json()
+    if (!res.ok || data.error) throw new Error(data.error || 'Upload fehlgeschlagen')
+    update('icon', `${uploadServer}${data.url}`)
+  } catch (err) {
+    iconUploadError.value = err.message
+  } finally {
+    iconUploading.value = false
+  }
+}
 
 const questionPreviewOptions = computed(() => {
   if (!props.node) return []
@@ -165,8 +195,17 @@ const questionPreviewOptions = computed(() => {
               style="flex:1"
             />
             <IconDisplay v-if="node.icon" :icon="node.icon" :size="36" />
+            <button
+              class="btn btn-sm"
+              :disabled="iconUploading || readonly"
+              @click="iconFileInput.click()"
+              title="Bild hochladen (max. 500 kB)"
+              style="white-space:nowrap"
+            >{{ iconUploading ? '…' : '↑ Upload' }}</button>
+            <input ref="iconFileInput" type="file" accept="image/*" style="display:none" @change="handleIconFileSelected" />
           </div>
           <a href="https://icon-sets.iconify.design/" target="_blank" class="icon-search-link">Icons suchen auf icon-sets.iconify.design ↗</a>
+          <div v-if="iconUploadError" style="color:var(--danger,#b91c1c);font-size:11px;margin-top:4px">{{ iconUploadError }}</div>
         </div>
 
         <div class="field">
@@ -262,8 +301,17 @@ const questionPreviewOptions = computed(() => {
               style="flex:1"
             />
             <IconDisplay v-if="node.icon" :icon="node.icon" :size="36" />
+            <button
+              class="btn btn-sm"
+              :disabled="iconUploading || readonly"
+              @click="iconFileInput.click()"
+              title="Bild hochladen (max. 500 kB)"
+              style="white-space:nowrap"
+            >{{ iconUploading ? '…' : '↑ Upload' }}</button>
+            <input ref="iconFileInput" type="file" accept="image/*" style="display:none" @change="handleIconFileSelected" />
           </div>
           <a href="https://icon-sets.iconify.design/" target="_blank" class="icon-search-link">Icons suchen auf icon-sets.iconify.design ↗</a>
+          <div v-if="iconUploadError" style="color:var(--danger,#b91c1c);font-size:11px;margin-top:4px">{{ iconUploadError }}</div>
         </div>
 
         <div class="field">

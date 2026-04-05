@@ -1,8 +1,8 @@
 <template>
   <span class="icon-display" :style="`width:${size}px;height:${size}px`">
     <img
-      v-if="isIcf || isIconify"
-      :src="resolvedUrl"
+      v-if="isIcf || isIconify || isUrl"
+      :src="isUrl ? icon : resolvedUrl"
       :style="`width:${size}px;height:${size}px;object-fit:contain`"
       alt=""
     />
@@ -21,9 +21,10 @@ const props = defineProps({
 
 const isIcf = computed(() => props.icon.startsWith('icf:'))
 const isSvg = computed(() => props.icon.startsWith('svg:'))
-// Everything with a colon that isn't icf: or svg: is treated as an Iconify
+const isUrl = computed(() => props.icon.startsWith('https://') || props.icon.startsWith('http://'))
+// Everything with a colon that isn't icf:, svg:, or a full URL is treated as an Iconify
 // prefix:name pair — users can paste directly from icon-sets.iconify.design
-const isIconify = computed(() => !isIcf.value && !isSvg.value && props.icon.includes(':'))
+const isIconify = computed(() => !isIcf.value && !isSvg.value && !isUrl.value && props.icon.includes(':'))
 
 function buildIconifyUrl(raw) {
   // Strip legacy "iconify:" prefix if present
