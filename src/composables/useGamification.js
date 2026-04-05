@@ -123,6 +123,11 @@ export function useGamification(config = GAMIFICATION_CONFIG) {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(ratings)) } catch (_) {}
   }
 
+  function restoreVariantRatings(variantId, ratingsObj) {
+    ratings[variantId] = JSON.parse(JSON.stringify(ratingsObj))
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(ratings)) } catch (_) {}
+  }
+
   return {
     ratings,
     setRating,
@@ -132,5 +137,6 @@ export function useGamification(config = GAMIFICATION_CONFIG) {
     loadRatingsFromStorage,
     purgeVariantRatings,
     renameVariantRatings,
+    restoreVariantRatings,
   }
 }

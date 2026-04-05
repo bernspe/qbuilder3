@@ -517,3 +517,24 @@ button:disabled { opacity: 0.38; pointer-events: none; }
   background: var(--bg3); color: var(--text3);
   border: 1px solid var(--border);
 }
+
+/* ── Responsive ───────────────────────────────────────────────────────────── */
+.mobile-panel-tabs { display: none; }
+
+@media (max-width: 767px) {
+  .workspace {
+    grid-template-columns: 1fr;
+  }
+  /* Alle Panels verstecken, nur das aktive anzeigen */
+  .panel { display: none; }
+  .panel--mobile-active { display: flex; }
+
+  /* Merge/Import/Export im Header ausblenden */
+  .header-actions-desktop { display: none !important; }
+
+  /* Mobile Panel-Tab-Switcher einblenden */
+  .mobile-panel-tabs { display: flex; }
+
+  /* Stat-Werte kleiner damit sie auf schmalen Screens passen */
+  .stat-val { font-size: 16px; }
+}

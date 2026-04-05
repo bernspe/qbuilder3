@@ -20,6 +20,20 @@ const showMerge = ref(false)
 const showImport = ref(false)
 const activeTab = ref('editor')
 
+// ── Mobile panel navigation ─────────────────────────────────────────────────
+const PANELS = ['structure', 'content', 'variants']
+const activePanel = ref('content')
+
+let swipeStartX = 0
+function onSwipeStart(e) { swipeStartX = e.touches[0].clientX }
+function onSwipeEnd(e) {
+  const dx = e.changedTouches[0].clientX - swipeStartX
+  if (Math.abs(dx) < 50) return
+  const idx = PANELS.indexOf(activePanel.value)
+  if (dx < 0 && idx < PANELS.length - 1) activePanel.value = PANELS[idx + 1]
+  if (dx > 0 && idx > 0) activePanel.value = PANELS[idx - 1]
+}
+
 // ── JSON-Editor ────────────────────────────────────────────────────────────
 const jsonEditContent = ref('')
 const jsonParseError = ref('')
@@ -377,7 +391,8 @@ async function saveVariantToServer() {
 
   const singleExport = JSON.stringify({
     exportedAt: new Date().toISOString(),
-    variants: { [variantId]: qb.variants[variantId] }
+    variants: { [variantId]: qb.variants[variantId] },
+    ratings: gamification.ratings[variantId] ?? {}
   }, null, 2)
 
   try {
@@ -389,6 +404,30 @@ async function saveVariantToServer() {
     const data = await res.json()
     if (!res.ok || data.error) throw new Error(data.error || 'Speichern fehlgeschlagen')
     showToast('Auf Server gespeichert ✓')
+  } catch (err) {
+    showToast('Fehler: ' + err.message)
+  }
+}
+
+async function loadVariantFromServer() {
+  const name = prompt('Name der Variante (ohne .json):')
+  if (!name?.trim()) return
+  const trimmed = name.trim()
+  if (qb.variants[trimmed]) {
+    showToast(`Variante "${trimmed}" existiert bereits lokal`)
+    return
+  }
+  try {
+    const res = await fetch(`${uploadServer}/php/get_variant.php?name=${encodeURIComponent(trimmed)}`)
+    if (!res.ok) throw new Error(`Nicht gefunden (HTTP ${res.status})`)
+    const raw = await res.text()
+    const parsed = JSON.parse(raw)
+    qb.importJSON(raw, trimmed)
+    if (parsed.ratings && Object.keys(parsed.ratings).length > 0) {
+      gamification.restoreVariantRatings(trimmed, parsed.ratings)
+    }
+    selectedId.value = null
+    showToast(`Variante "${trimmed}" geladen`)
   } catch (err) {
     showToast('Fehler: ' + err.message)
   }
@@ -431,30 +470,44 @@ function doExport() {
         <button class="btn btn-sm" :disabled="!canRedo" @click="doRedo" title="Wiederholen (Strg+Y)">↪</button>
       </div>
       <div class="header-sep"></div>
-      <div class="btn-group">
+      <div class="btn-group header-actions-desktop">
         <button class="btn btn-sm" @click="showMerge = true">⇄ Zusammenführen</button>
         <button class="btn btn-sm" @click="showImport = true">↑ Import</button>
         <button class="btn btn-sm btn-primary" @click="doExport">↓ JSON Export</button>
       </div>
     </header>
 
-    <!-- Tab bar -->
-    <div style="display:flex;gap:0;border-bottom:1px solid var(--border);background:var(--bg);flex-shrink:0">
-      <button
-        v-for="tab in tabs"
-        :key="tab.id"
-        class="btn btn-ghost btn-sm"
-        :style="activeTab === tab.id
-          ? 'border-bottom:2px solid var(--text);border-radius:0;color:var(--text);padding:8px 16px'
-          : 'border-radius:0;color:var(--text3);padding:8px 16px'"
-        @click="activeTab = tab.id"
-      >{{ tab.label }}</button>
+    <!-- Tab bar (Editor/Vorschau/JSON) + Mobile Panel Tabs -->
+    <div style="display:flex;border-bottom:1px solid var(--border);background:var(--bg);flex-shrink:0;justify-content:space-between">
+      <div style="display:flex">
+        <button
+          v-for="tab in tabs"
+          :key="tab.id"
+          class="btn btn-ghost btn-sm"
+          :style="activeTab === tab.id
+            ? 'border-bottom:2px solid var(--text);border-radius:0;color:var(--text);padding:8px 16px'
+            : 'border-radius:0;color:var(--text3);padding:8px 16px'"
+          @click="activeTab = tab.id; activePanel = 'content'"
+        >{{ tab.label }}</button>
+      </div>
+      <!-- Mobile-only panel switcher -->
+      <div class="mobile-panel-tabs">
+        <button
+          v-for="item in [{ id: 'structure', icon: '☰' }, { id: 'content', icon: '✎' }, { id: 'variants', icon: '◈' }]"
+          :key="item.id"
+          class="btn btn-ghost btn-sm"
+          :style="activePanel === item.id
+            ? 'border-bottom:2px solid var(--text);border-radius:0;color:var(--text);padding:8px 14px'
+            : 'border-radius:0;color:var(--text3);padding:8px 14px'"
+          @click="activePanel = item.id"
+        >{{ item.icon }}</button>
+      </div>
     </div>
 
     <!-- Main workspace -->
-    <div class="workspace">
+    <div class="workspace" @touchstart.passive="onSwipeStart" @touchend.passive="onSwipeEnd">
       <!-- Left: Tree -->
-      <div class="panel">
+      <div class="panel" :class="{ 'panel--mobile-active': activePanel === 'structure' }">
         <div class="panel-header">
           <h2>Struktur</h2>
         </div>
@@ -520,7 +573,7 @@ function doExport() {
       </div>
 
       <!-- Center: Editor / Preview / JSON -->
-      <div class="panel">
+      <div class="panel" :class="{ 'panel--mobile-active': activePanel === 'content' }">
         <div class="panel-body" style="padding:0">
 
           <template v-if="activeTab === 'editor'">
@@ -586,7 +639,7 @@ function doExport() {
       </div>
 
       <!-- Right: Variant panel -->
-      <div class="panel">
+      <div class="panel" :class="{ 'panel--mobile-active': activePanel === 'variants' }">
         <div class="panel-header">
           <h2>Varianten</h2>
           <button class="btn btn-sm" @click="handleAddVariant">+ Neue</button>
@@ -640,6 +693,7 @@ function doExport() {
           <!-- Server-Aktionen -->
           <div style="margin-top:12px;display:flex;flex-direction:column;gap:6px">
             <button class="btn btn-sm btn-primary" @click="saveVariantToServer">↑ Auf Server speichern</button>
+            <button class="btn btn-sm" @click="loadVariantFromServer">↓ Variante laden</button>
             <button class="btn btn-sm" @click="loadOriginalFromServer">↓ Original laden</button>
           </div>
         </div>
