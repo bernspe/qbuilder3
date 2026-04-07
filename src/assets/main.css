@@ -324,6 +324,14 @@ textarea { resize: vertical; min-height: 64px; line-height: 1.5; }
   backdrop-filter: blur(2px) !important;
 }
 
+/* Interaktive Tour-Schritte: Overlay passiert Klicks durch, Modal bleibt bedienbar */
+.tour-overlay--interactive {
+  pointer-events: none;
+}
+.tour-overlay--interactive .modal {
+  pointer-events: auto;
+}
+
 .onboarding-modal {
   width: 460px; max-width: calc(100vw - 32px);
   padding: 22px 24px 18px;
@@ -357,6 +365,20 @@ textarea { resize: vertical; min-height: 64px; line-height: 1.5; }
   border-top: 1px solid var(--border); padding-top: 12px;
 }
 .onboarding-counter { font-size: 11px; color: var(--text3); }
+.onboarding-hint {
+  border-top: 1px solid var(--border); padding-top: 12px;
+  font-size: 13px; color: var(--primary, #2563eb);
+  display: flex; align-items: center; gap: 8px;
+  font-weight: 500;
+}
+.onboarding-hint-pulse {
+  animation: hint-pulse 1.2s ease-in-out infinite;
+  font-size: 10px;
+}
+@keyframes hint-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.3; transform: scale(0.7); }
+}
 
 /* ── Toast ── */
 .toast {

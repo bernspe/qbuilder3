@@ -133,7 +133,7 @@ watch(() => props.selectedId, async (id) => {
 
         <div v-if="node.reference" class="preview-q-reference">Referenz: {{ node.reference }}</div>
 
-        <div v-if="!isMainVariant" class="rating-section">
+        <div v-if="!isMainVariant" class="rating-section" data-tour="rating-fields">
           <div v-for="{ key, label } in [
             { key: 'importance', label: 'Wichtigkeit' },
             { key: 'understandability', label: 'Verständlichkeit' }

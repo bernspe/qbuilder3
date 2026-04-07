@@ -184,7 +184,7 @@ const questionPreviewOptions = computed(() => {
 
       <!-- ══ SCREENINGFRAGE ══ -->
       <template v-else-if="node.type === 'question'">
-        <div class="field">
+        <div class="field" data-tour="icon-field">
           <label>Icon</label>
           <div style="display:flex;align-items:center;gap:10px">
             <input
@@ -208,7 +208,7 @@ const questionPreviewOptions = computed(() => {
           <div v-if="iconUploadError" style="color:var(--danger,#b91c1c);font-size:11px;margin-top:4px">{{ iconUploadError }}</div>
         </div>
 
-        <div class="field">
+        <div class="field" data-tour="heading-field">
           <label>Heading / Bezeichnung</label>
           <input type="text" :value="node.label" @input="update('label', $event.target.value)" />
         </div>
@@ -218,7 +218,7 @@ const questionPreviewOptions = computed(() => {
           <input type="text" value="Screeningfrage" readonly style="opacity:0.45;cursor:default" />
         </div>
 
-        <div class="field">
+        <div class="field" data-tour="question-field">
           <label>Fragetext</label>
           <textarea
             :value="node.question ?? ''"
@@ -228,51 +228,53 @@ const questionPreviewOptions = computed(() => {
           ></textarea>
         </div>
 
-        <div class="field">
+        <div class="field" data-tour="reference-field">
           <label>Referenz</label>
           <input type="text" :value="node.reference ?? ''" @input="update('reference', $event.target.value)" placeholder="z.B. SF36 Frage 1" />
         </div>
 
-        <div class="field">
-          <label>Fragetyp</label>
-          <select :value="node.questionType" @change="update('questionType', $event.target.value)">
-            <option value="yesno">Ja / Nein</option>
-            <option value="scale">Skala (1–5)</option>
-          </select>
-        </div>
-
-        <div v-if="node.questionType === 'scale'" class="field">
-          <label>Skala-Beschriftung</label>
-          <div class="row">
-            <input type="text" class="col" :value="node.scaleMin ?? ''" @input="update('scaleMin', $event.target.value)" placeholder="Min-Label" />
-            <input type="text" class="col" :value="node.scaleMax ?? ''" @input="update('scaleMax', $event.target.value)" placeholder="Max-Label" />
+        <div data-tour="answers-field">
+          <div class="field">
+            <label>Fragetyp</label>
+            <select :value="node.questionType" @change="update('questionType', $event.target.value)">
+              <option value="yesno">Ja / Nein</option>
+              <option value="scale">Skala (1–5)</option>
+            </select>
           </div>
-        </div>
 
-        <div class="field" v-if="questionPreviewOptions.length">
-          <label>Antwortreihenfolge (Farbgradient)</label>
-          <div class="btn-group">
-            <button
-              class="btn btn-sm"
-              :class="{ 'btn-primary': (node.answerOrder ?? 'schlecht-gut') === 'schlecht-gut' }"
-              @click="update('answerOrder', 'schlecht-gut')"
-            >schlecht → gut</button>
-            <button
-              class="btn btn-sm"
-              :class="{ 'btn-primary': node.answerOrder === 'gut-schlecht' }"
-              @click="update('answerOrder', 'gut-schlecht')"
-            >gut → schlecht</button>
+          <div v-if="node.questionType === 'scale'" class="field">
+            <label>Skala-Beschriftung</label>
+            <div class="row">
+              <input type="text" class="col" :value="node.scaleMin ?? ''" @input="update('scaleMin', $event.target.value)" placeholder="Min-Label" />
+              <input type="text" class="col" :value="node.scaleMax ?? ''" @input="update('scaleMax', $event.target.value)" placeholder="Max-Label" />
+            </div>
           </div>
-        </div>
 
-        <div class="field" v-if="questionPreviewOptions.length">
-          <label>Vorschau Antworten</label>
-          <GradientAnswerButtons
-            :options="questionPreviewOptions"
-            :defaultIdx="node.defaultIdx"
-            colorScheme="restriction"
-            :order="node.answerOrder ?? 'schlecht-gut'"
-          />
+          <div class="field" v-if="questionPreviewOptions.length">
+            <label>Antwortreihenfolge (Farbgradient)</label>
+            <div class="btn-group">
+              <button
+                class="btn btn-sm"
+                :class="{ 'btn-primary': (node.answerOrder ?? 'schlecht-gut') === 'schlecht-gut' }"
+                @click="update('answerOrder', 'schlecht-gut')"
+              >schlecht → gut</button>
+              <button
+                class="btn btn-sm"
+                :class="{ 'btn-primary': node.answerOrder === 'gut-schlecht' }"
+                @click="update('answerOrder', 'gut-schlecht')"
+              >gut → schlecht</button>
+            </div>
+          </div>
+
+          <div class="field" v-if="questionPreviewOptions.length">
+            <label>Vorschau Antworten</label>
+            <GradientAnswerButtons
+              :options="questionPreviewOptions"
+              :defaultIdx="node.defaultIdx"
+              colorScheme="restriction"
+              :order="node.answerOrder ?? 'schlecht-gut'"
+            />
+          </div>
         </div>
 
         <div class="field">
@@ -290,7 +292,7 @@ const questionPreviewOptions = computed(() => {
 
       <!-- ══ UNTERFRAGE ══ -->
       <template v-else-if="node.type === 'subquestion'">
-        <div class="field">
+        <div class="field" data-tour="icon-field">
           <label>Icon</label>
           <div style="display:flex;align-items:center;gap:10px">
             <input
@@ -314,7 +316,7 @@ const questionPreviewOptions = computed(() => {
           <div v-if="iconUploadError" style="color:var(--danger,#b91c1c);font-size:11px;margin-top:4px">{{ iconUploadError }}</div>
         </div>
 
-        <div class="field">
+        <div class="field" data-tour="heading-field">
           <label>Heading / Bezeichnung</label>
           <input type="text" :value="node.label" @input="update('label', $event.target.value)" />
         </div>
@@ -324,7 +326,7 @@ const questionPreviewOptions = computed(() => {
           <input type="text" :value="node.subheading ?? ''" @input="update('subheading', $event.target.value)" />
         </div>
 
-        <div class="field">
+        <div class="field" data-tour="question-field">
           <label>Fragetext</label>
           <textarea
             :value="node.question ?? ''"
@@ -334,21 +336,22 @@ const questionPreviewOptions = computed(() => {
           ></textarea>
         </div>
 
-        <div class="field">
+        <div class="field" data-tour="reference-field">
           <label>Referenz</label>
           <input type="text" :value="node.reference ?? ''" @input="update('reference', $event.target.value)" placeholder="z.B. SF36 Frage 2" />
         </div>
 
-        <div class="field">
-          <label>Antwortoptionen (eine pro Zeile)</label>
-          <textarea
-            class="option-list-input"
-            :value="(node.options ?? []).join('\n')"
-            @input="update('options', $event.target.value.split('\n').map(s => s.trim()).filter(Boolean))"
-            rows="5"
-            placeholder="Option A&#10;Option B&#10;Option C"
-          ></textarea>
-        </div>
+        <div data-tour="answers-field">
+          <div class="field">
+            <label>Antwortoptionen (eine pro Zeile)</label>
+            <textarea
+              class="option-list-input"
+              :value="(node.options ?? []).join('\n')"
+              @input="update('options', $event.target.value.split('\n').map(s => s.trim()).filter(Boolean))"
+              rows="5"
+              placeholder="Option A&#10;Option B&#10;Option C"
+            ></textarea>
+          </div>
 
         <template v-if="(node.options ?? []).length">
           <div class="field">
@@ -388,6 +391,7 @@ const questionPreviewOptions = computed(() => {
             />
           </div>
         </template>
+        </div><!-- /answers-field -->
 
         <div class="field">
           <label>Hilfetext</label>

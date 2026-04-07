@@ -25,6 +25,10 @@ function closeOnboarding() {
   showOnboarding.value = false
   localStorage.setItem('qb_onboarding_seen', '1')
 }
+const ratingCount = computed(() => {
+  const vr = gamification.ratings[qb.currentVariant.value] ?? {}
+  return Object.values(vr).filter(r => r.importance !== null && r.understandability !== null).length
+})
 const activeTab = ref('editor')
 
 // ── Mobile panel navigation ─────────────────────────────────────────────────
@@ -861,6 +865,11 @@ function doExport() {
     <!-- Onboarding -->
     <OnboardingModal
       v-if="showOnboarding"
+      :variant-count="qb.variantList.value.length"
+      :selected-id="selectedId"
+      :active-tab="activeTab"
+      :current-variant-linked="autosave.isLinked(qb.currentVariant.value)"
+      :rating-count="ratingCount"
       @close="closeOnboarding"
       @activate="({ panel, tab }) => { if (panel) activePanel = panel; if (tab) activeTab = tab }"
     />
