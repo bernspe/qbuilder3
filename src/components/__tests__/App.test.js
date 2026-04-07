@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { shallowMount } from '@vue/test-utils'
+import { shallowMount, flushPromises } from '@vue/test-utils'
 import App from '../../App.vue'
 
 // VueDraggable muss als einfaches Wrapper-Element gemockt werden
@@ -19,6 +19,10 @@ beforeEach(() => {
   })
   vi.stubGlobal('prompt', () => null)
   vi.stubGlobal('alert', () => {})
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+    ok: true,
+    json: () => Promise.resolve({ variants: [] })
+  }))
 })
 
 // ─── Feature 1: Varianten löschen ────────────────────────────────────────────
@@ -153,6 +157,7 @@ describe('App – Varianten umbenennen', () => {
     await input.setValue('Mein Fragebogen')
     await input.trigger('keydown', { key: 'Enter' })
     await wrapper.vm.$nextTick()
+    await wrapper.vm.$nextTick()
     const items = wrapper.findAll('[data-testid="variant-item"]')
     expect(items.some(i => i.text().includes('Mein Fragebogen'))).toBe(true)
     expect(wrapper.find('[data-testid="variant-name-input"]').exists()).toBe(false)
@@ -174,6 +179,59 @@ describe('App – Varianten umbenennen', () => {
   })
 })
 
+// ─── Feature 4: Umbenennung – Server-Check ────────────────────────────────────
+
+describe('App – Umbenennung: Server-Check', () => {
+  async function addVariantAndOpenRename(wrapper, name = 'ZweiteVariante') {
+    vi.stubGlobal('prompt', () => name)
+    const addBtn = wrapper.findAll('button').find(b => b.text() === '+ Neue')
+    await addBtn.trigger('click')
+    await wrapper.vm.$nextTick()
+    await wrapper.vm.$nextTick()
+    await wrapper.find('[data-testid="rename-variant"]').trigger('click')
+    return wrapper.find('[data-testid="variant-name-input"]')
+  }
+
+  it('blockiert Umbenennung wenn Name auf dem Server bereits vergeben ist', async () => {
+    const wrapper = shallowMount(App)
+    const input = await addVariantAndOpenRename(wrapper)
+    fetch.mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ variants: ['BelegterName'] })
+    })
+    await input.setValue('BelegterName')
+    await input.trigger('keydown', { key: 'Enter' })
+    await wrapper.vm.$nextTick()
+    await wrapper.vm.$nextTick()
+    // Eingabefeld bleibt offen
+    expect(wrapper.find('[data-testid="variant-name-input"]').exists()).toBe(true)
+    // Name wurde nicht übernommen
+    expect(wrapper.findAll('[data-testid="variant-item"]').every(i => !i.text().includes('BelegterName'))).toBe(true)
+  })
+
+  it('erlaubt Umbenennung wenn Name auf dem Server frei ist', async () => {
+    const wrapper = shallowMount(App)
+    const input = await addVariantAndOpenRename(wrapper)
+    await input.setValue('FreierName')
+    await input.trigger('keydown', { key: 'Enter' })
+    await wrapper.vm.$nextTick()
+    await wrapper.vm.$nextTick()
+    expect(wrapper.findAll('[data-testid="variant-item"]').some(i => i.text().includes('FreierName'))).toBe(true)
+    expect(wrapper.find('[data-testid="variant-name-input"]').exists()).toBe(false)
+  })
+
+  it('erlaubt Umbenennung wenn Server nicht erreichbar ist', async () => {
+    fetch.mockRejectedValue(new Error('NetworkError'))
+    const wrapper = shallowMount(App)
+    const input = await addVariantAndOpenRename(wrapper)
+    await input.setValue('OfflineName')
+    await input.trigger('keydown', { key: 'Enter' })
+    await wrapper.vm.$nextTick()
+    await wrapper.vm.$nextTick()
+    expect(wrapper.findAll('[data-testid="variant-item"]').some(i => i.text().includes('OfflineName'))).toBe(true)
+  })
+})
+
 // ─── Feature 3: JSON-Tab scrollt zur ausgewählten Node ───────────────────────
 
 describe('App – JSON-Tab Scroll bei TreeView-Navigation', () => {
@@ -182,6 +240,8 @@ describe('App – JSON-Tab Scroll bei TreeView-Navigation', () => {
     vi.stubGlobal('prompt', () => 'TestVariante')
     const addVariantBtn = wrapper.findAll('button').find(b => b.text() === '+ Neue')
     await addVariantBtn.trigger('click')
+    // Zwei ticks: erstes für Vue-Reaktivität, zweites für den async fetch in handleAddVariant
+    await wrapper.vm.$nextTick()
     await wrapper.vm.$nextTick()
     // Zweite Variante ist nach dem Erstellen automatisch aktiv
   }
@@ -227,5 +287,51 @@ describe('App – JSON-Tab Scroll bei TreeView-Navigation', () => {
     await wrapper.vm.$nextTick()
 
     expect(spy).toHaveBeenCalled()
+  })
+})
+
+// ─── Feature 5: Server-Löschung beim Löschen einer verlinkten Variante ────────
+
+describe('App – Variante löschen: Server-Löschung', () => {
+  // Hilfsfunktion: findet den Delete-Button der letzten (zuletzt hinzugefügten) Variante
+  function lastDeleteBtn(wrapper) {
+    const btns = wrapper.findAll('[data-testid="delete-variant"]')
+    return btns[btns.length - 1]
+  }
+
+  it('ruft delete_variant.php auf wenn eine verlinkte Variante gelöscht wird', async () => {
+    const wrapper = shallowMount(App)
+
+    // Variante hinzufügen
+    vi.stubGlobal('prompt', () => 'ServerVariante')
+    await wrapper.findAll('button').find(b => b.text() === '+ Neue').trigger('click')
+    await flushPromises()
+
+    // Auf Server speichern → verlinkt die Variante
+    await wrapper.find('[data-tour="autosave-btn"]').trigger('click')
+    await flushPromises()
+
+    // Variante löschen (die zuletzt hinzugefügte = ServerVariante)
+    fetch.mockClear()
+    await lastDeleteBtn(wrapper).trigger('click')
+    await flushPromises()
+
+    const deleteCall = fetch.mock.calls.find(([url]) => url.includes('delete_variant'))
+    expect(deleteCall).toBeDefined()
+  })
+
+  it('ruft delete_variant.php NICHT auf wenn eine nicht-verlinkte Variante gelöscht wird', async () => {
+    const wrapper = shallowMount(App)
+
+    vi.stubGlobal('prompt', () => 'LokalVariante')
+    await wrapper.findAll('button').find(b => b.text() === '+ Neue').trigger('click')
+    await flushPromises()
+
+    fetch.mockClear()
+    await lastDeleteBtn(wrapper).trigger('click')
+    await flushPromises()
+
+    const deleteCall = fetch.mock.calls.find(([url]) => url.includes('delete_variant'))
+    expect(deleteCall).toBeUndefined()
   })
 })

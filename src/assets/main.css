@@ -299,6 +299,65 @@ textarea { resize: vertical; min-height: 64px; line-height: 1.5; }
 .modal textarea { font-family: monospace; font-size: 11px; height: 260px; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
 
+/* ── Onboarding ── */
+
+/* Spotlight: element itself is the "hole", box-shadow darkens the rest */
+.tour-spotlight {
+  position: fixed;
+  border-radius: 6px;
+  box-shadow: 0 0 0 9999px rgba(0,0,0,0.62);
+  z-index: 1200;
+  pointer-events: none;
+  transition: top 0.25s ease, left 0.25s ease, width 0.25s ease, height 0.25s ease;
+  outline: 2px solid rgba(255,255,255,0.25);
+}
+
+/* Overlay: transparent (backdrop done by spotlight), only for click-to-close */
+.tour-overlay {
+  background: transparent !important;
+  backdrop-filter: none !important;
+  z-index: 1201;
+}
+/* When no spotlight (centered steps), restore normal overlay background */
+.tour-overlay--dim {
+  background: rgba(0,0,0,0.45) !important;
+  backdrop-filter: blur(2px) !important;
+}
+
+.onboarding-modal {
+  width: 460px; max-width: calc(100vw - 32px);
+  padding: 22px 24px 18px;
+  position: relative;
+  display: flex; flex-direction: column; gap: 0;
+  z-index: 1202;
+  /* Default centered; overridden inline when positioned near a target */
+}
+.onboarding-close {
+  position: absolute; top: 10px; right: 12px;
+  background: none; border: none; cursor: pointer;
+  font-size: 16px; color: var(--text3); line-height: 1;
+  padding: 4px 6px; border-radius: 4px;
+}
+.onboarding-close:hover { color: var(--text1); background: var(--bg2); }
+.onboarding-dots {
+  display: flex; gap: 6px; justify-content: center; margin-bottom: 18px;
+}
+.onboarding-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--border2); cursor: pointer; transition: background 0.15s;
+}
+.onboarding-dot.done { background: var(--primary, #2563eb); opacity: 0.4; }
+.onboarding-dot.active { background: var(--primary, #2563eb); opacity: 1; }
+.onboarding-body { text-align: center; padding: 0 4px; }
+.onboarding-icon { font-size: 38px; line-height: 1; margin-bottom: 12px; }
+.onboarding-title { font-size: 16px; font-weight: 600; margin-bottom: 8px; color: var(--text1); }
+.onboarding-text { font-size: 13px; color: var(--text2); line-height: 1.6; margin-bottom: 20px; min-height: 68px; }
+.onboarding-nav {
+  display: flex; align-items: center; justify-content: space-between;
+  border-top: 1px solid var(--border); padding-top: 12px;
+}
+.onboarding-counter { font-size: 11px; color: var(--text3); }
+
 /* ── Toast ── */
 .toast {
   position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);

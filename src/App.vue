@@ -3,6 +3,7 @@ import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { useRefHistory } from '@vueuse/core'
 import { useQuestionnaire } from './composables/useQuestionnaire.js'
 import { useGamification } from './composables/useGamification.js'
+import { useAutosave } from './composables/useAutosave.js'
 import { useToast } from './composables/useToast.js'
 import { VueDraggable } from 'vue-draggable-plus'
 import TreeNode from './components/TreeNode.vue'
@@ -10,6 +11,7 @@ import NodeEditor from './components/NodeEditor.vue'
 import PreviewPanel from './components/PreviewPanel.vue'
 import MergeModal from './components/MergeModal.vue'
 import ImportModal from './components/ImportModal.vue'
+import OnboardingModal from './components/OnboardingModal.vue'
 
 const qb = useQuestionnaire()
 const gamification = useGamification()
@@ -18,6 +20,11 @@ const { toasts, show: showToast } = useToast()
 const selectedId = ref(null)
 const showMerge = ref(false)
 const showImport = ref(false)
+const showOnboarding = ref(!localStorage.getItem('qb_onboarding_seen'))
+function closeOnboarding() {
+  showOnboarding.value = false
+  localStorage.setItem('qb_onboarding_seen', '1')
+}
 const activeTab = ref('editor')
 
 // ── Mobile panel navigation ─────────────────────────────────────────────────
@@ -273,7 +280,47 @@ function handleKeyDown(e) {
     doRedo()
   }
 }
-onMounted(() => document.addEventListener('keydown', handleKeyDown))
+onMounted(async () => {
+  document.addEventListener('keydown', handleKeyDown)
+
+  // Erster Start: kein localStorage → VITE_ON_STARTUP laden
+  const onStartup = import.meta.env.VITE_ON_STARTUP ?? ''
+  const isFirstStart = !localStorage.getItem('qb_vue3_data')
+  if (isFirstStart && onStartup) {
+    try {
+      const res = await fetch(`${uploadServer}/php/get_original.php`)
+      if (res.ok) {
+        const raw = await res.text()
+        qb.importJSON(raw)
+      }
+    } catch (_) {}
+  }
+
+  // Conflict check: für jede serververlinkte Variante prüfen ob Server neuer ist
+  for (const v of qb.variantList.value) {
+    if (!autosave.isLinked(v.id)) continue
+    try {
+      const { newer, serverTimestamp } = await autosave.checkServerVersion(v.id)
+      if (!newer) continue
+      const local = autosave.getSavedAt(v.id)
+      const ok = confirm(
+        `Variante "${v.label}" hat eine neuere Version auf dem Server (${serverTimestamp?.slice(0, 10)}).\n` +
+        `Lokal: ${local?.slice(0, 10) ?? '–'}\n\n` +
+        `Server-Version laden? (Nein = lokale Version behalten)`
+      )
+      if (ok) {
+        const res = await fetch(`${uploadServer}/php/get_variant.php?name=${encodeURIComponent(v.id)}`)
+        const raw = await res.text()
+        const parsed = JSON.parse(raw)
+        qb.importJSON(raw, v.id)
+        if (parsed.ratings) gamification.restoreVariantRatings(v.id, parsed.ratings)
+        autosave.recordSave(v.id, parsed.exportedAt)
+        autosave.setStatus(v.id, 'saved', parsed.exportedAt)
+        showToast(`Variante "${v.id}" vom Server geladen`)
+      }
+    } catch (_) {}
+  }
+})
 onUnmounted(() => document.removeEventListener('keydown', handleKeyDown))
 // ──────────────────────────────────────────────────────────────────────────
 
@@ -312,9 +359,12 @@ function handleAddRoot(type) {
   }
 }
 
-function handleDeleteVariant(id) {
+async function handleDeleteVariant(id) {
+  const wasLinked = autosave.isLinked(id)
   if (!qb.deleteVariant(id)) return
   gamification.purgeVariantRatings(id)
+  autosave.purgeLinked(id)
+  if (wasLinked) autosave.deleteFromServer(id)
   showToast('Variante gelöscht')
 }
 
@@ -331,11 +381,19 @@ function startRenameVariant(id) {
   editingVariantLabel.value = qb.variants[id]?.label ?? ''
 }
 
-function confirmRenameVariant(id) {
-  const newId = qb.renameVariant(id, editingVariantLabel.value)
+async function confirmRenameVariant(id) {
+  const trimmed = editingVariantLabel.value?.trim()
+  if (!trimmed) return
+  const serverVariants = await autosave.fetchServerVariants()
+  if (serverVariants.includes(trimmed) && trimmed !== id) {
+    showToast('Name bereits auf dem Server vergeben')
+    return
+  }
+  const newId = qb.renameVariant(id, trimmed)
   if (newId === false) { showToast('Name bereits vergeben'); return }
   if (typeof newId === 'string' && newId !== id) {
     gamification.renameVariantRatings(id, newId)
+    autosave.renameLinked(id, newId)
   }
   editingVariantId.value = null
 }
@@ -344,12 +402,18 @@ function cancelRenameVariant() {
   editingVariantId.value = null
 }
 
-function handleAddVariant() {
+async function handleAddVariant() {
   const name = prompt('Name der neuen Variante:')
-  if (!name) return
-  if (!qb.addVariant(name)) { alert('Name bereits vergeben.'); return }
-  qb.switchVariant(name)
-  showToast('Variante "' + name + '" erstellt')
+  if (!name?.trim()) return
+  const trimmed = name.trim()
+  if (!qb.addVariant(trimmed)) { alert('Name bereits lokal vergeben.'); return }
+  const serverVariants = await autosave.fetchServerVariants()
+  if (serverVariants.includes(trimmed)) {
+    const ok = confirm(`Der Name "${trimmed}" ist auf dem Server bereits vergeben. Trotzdem verwenden?\n(Achtung: beim Speichern wird die Server-Variante überschrieben.)`)
+    if (!ok) { qb.deleteVariant(trimmed); return }
+  }
+  qb.switchVariant(trimmed)
+  showToast('Variante "' + trimmed + '" erstellt')
 }
 
 function handleMerge({ fromId, toId, newName }) {
@@ -371,18 +435,50 @@ function handleImport({ raw, asVariant }) {
 // ── Server Storage ─────────────────────────────────────────────────────────
 
 const uploadServer = import.meta.env.VITE_UPLOAD_SERVER ?? ''
+const autosave = useAutosave(uploadServer)
+
+const autosaveStatus = computed(() => autosave.getStatus(qb.currentVariant.value))
+const autosaveButtonLabel = computed(() => {
+  const s = autosaveStatus.value.status
+  if (s === 'saving') return '⏳ Speichert…'
+  if (s === 'saved') return '✓ Autosave'
+  if (s === 'error') return '⚠ Fehler – erneut speichern'
+  if (autosave.isLinked(qb.currentVariant.value)) return '↑ Jetzt speichern'
+  return '↑ Auf Server speichern'
+})
+const autosaveButtonTooltip = computed(() => {
+  const s = autosaveStatus.value
+  if (s.status === 'saved') return `Zuletzt: ${s.message?.slice(0, 16)} · Klick für Sofort-Speichern`
+  if (s.status === 'error') return `Fehler: ${s.message} · Klick zum Wiederholen`
+  if (autosave.isLinked(qb.currentVariant.value))
+    return 'Autosave aktiv – wird nach jeder Änderung automatisch gespeichert'
+  return 'Variante auf Server speichern (dann automatisch nach jeder Änderung)'
+})
+
+// Debounced Autosave: nach jeder Änderung an einer verlinkten Variante
+let autosaveTimer = null
+watch(
+  () => JSON.stringify(qb.variants[qb.currentVariant.value]) +
+        JSON.stringify(gamification.ratings[qb.currentVariant.value]),
+  () => {
+    const variantId = qb.currentVariant.value
+    if (!autosave.isLinked(variantId)) return
+    clearTimeout(autosaveTimer)
+    autosaveTimer = setTimeout(async () => {
+      const id = qb.currentVariant.value
+      const exportData = JSON.stringify({
+        exportedAt: new Date().toISOString(),
+        variants: { [id]: qb.variants[id] },
+        ratings: gamification.ratings[id] ?? {}
+      }, null, 2)
+      try { await autosave.saveToServer(id, exportData) } catch (_) {}
+    }, 3000)
+  }
+)
 
 async function saveVariantToServer() {
   const variantId = qb.currentVariant.value
-  let serverVariants = []
-  try {
-    const res = await fetch(`${uploadServer}/php/get_variants.php`)
-    const data = await res.json()
-    serverVariants = data.variants ?? []
-  } catch (_) {
-    showToast('Server nicht erreichbar')
-    return
-  }
+  const serverVariants = await autosave.fetchServerVariants()
 
   if (serverVariants.includes(variantId)) {
     const ok = confirm(`Variante "${variantId}" ist auf dem Server bereits vorhanden. Überschreiben?`)
@@ -396,13 +492,7 @@ async function saveVariantToServer() {
   }, null, 2)
 
   try {
-    const res = await fetch(`${uploadServer}/php/upload.php?filename=${encodeURIComponent(variantId)}.json`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: singleExport
-    })
-    const data = await res.json()
-    if (!res.ok || data.error) throw new Error(data.error || 'Speichern fehlgeschlagen')
+    await autosave.saveToServer(variantId, singleExport)
     showToast('Auf Server gespeichert ✓')
   } catch (err) {
     showToast('Fehler: ' + err.message)
@@ -426,6 +516,9 @@ async function loadVariantFromServer() {
     if (parsed.ratings && Object.keys(parsed.ratings).length > 0) {
       gamification.restoreVariantRatings(trimmed, parsed.ratings)
     }
+    autosave.markLinked(trimmed)
+    autosave.recordSave(trimmed, parsed.exportedAt ?? null)
+    if (parsed.exportedAt) autosave.setStatus(trimmed, 'saved', parsed.exportedAt)
     selectedId.value = null
     showToast(`Variante "${trimmed}" geladen`)
   } catch (err) {
@@ -439,6 +532,14 @@ async function loadOriginalFromServer() {
     if (!res.ok) throw new Error('Original nicht gefunden (HTTP ' + res.status + ')')
     const raw = await res.text()
     qb.importJSON(raw, 'original')
+    // Ensure 'original' is always the first variant
+    const allKeys = Object.keys(qb.variants)
+    if (allKeys[0] !== 'original') {
+      const reordered = { original: qb.variants['original'] }
+      allKeys.filter(k => k !== 'original').forEach(k => { reordered[k] = qb.variants[k] })
+      Object.keys(qb.variants).forEach(k => delete qb.variants[k])
+      Object.assign(qb.variants, reordered)
+    }
     selectedId.value = null
     showToast('Original geladen')
   } catch (err) {
@@ -466,7 +567,7 @@ function doExport() {
         <button class="btn btn-sm" :disabled="isMainVariant" @click="handleAddRoot('section')">+ Abschnitt</button>
       </div>
       <div class="btn-group" style="margin-left:4px">
-        <button class="btn btn-sm" :disabled="!canUndo" @click="doUndo" title="Rückgängig (Strg+Z)">↩</button>
+        <button data-tour="undo-btn" class="btn btn-sm" :disabled="!canUndo" @click="doUndo" title="Rückgängig (Strg+Z)">↩</button>
         <button class="btn btn-sm" :disabled="!canRedo" @click="doRedo" title="Wiederholen (Strg+Y)">↪</button>
       </div>
       <div class="header-sep"></div>
@@ -483,6 +584,7 @@ function doExport() {
         <button
           v-for="tab in tabs"
           :key="tab.id"
+          :data-tour="tab.id === 'preview' ? 'preview-tab' : undefined"
           class="btn btn-ghost btn-sm"
           :style="activeTab === tab.id
             ? 'border-bottom:2px solid var(--text);border-radius:0;color:var(--text);padding:8px 16px'
@@ -507,7 +609,7 @@ function doExport() {
     <!-- Main workspace -->
     <div class="workspace" @touchstart.passive="onSwipeStart" @touchend.passive="onSwipeEnd">
       <!-- Left: Tree -->
-      <div class="panel" :class="{ 'panel--mobile-active': activePanel === 'structure' }">
+      <div data-tour="structure-panel" class="panel" :class="{ 'panel--mobile-active': activePanel === 'structure' }">
         <div class="panel-header">
           <h2>Struktur</h2>
         </div>
@@ -573,7 +675,7 @@ function doExport() {
       </div>
 
       <!-- Center: Editor / Preview / JSON -->
-      <div class="panel" :class="{ 'panel--mobile-active': activePanel === 'content' }">
+      <div data-tour="content-panel" class="panel" :class="{ 'panel--mobile-active': activePanel === 'content' }">
         <div class="panel-body" style="padding:0">
 
           <template v-if="activeTab === 'editor'">
@@ -639,10 +741,10 @@ function doExport() {
       </div>
 
       <!-- Right: Variant panel -->
-      <div class="panel" :class="{ 'panel--mobile-active': activePanel === 'variants' }">
+      <div data-tour="variants-panel" class="panel" :class="{ 'panel--mobile-active': activePanel === 'variants' }">
         <div class="panel-header">
           <h2>Varianten</h2>
-          <button class="btn btn-sm" @click="handleAddVariant">+ Neue</button>
+          <button data-tour="add-variant" class="btn btn-sm" @click="handleAddVariant">+ Neue</button>
         </div>
         <div class="panel-body">
           <div
@@ -668,8 +770,13 @@ function doExport() {
             </template>
             <template v-else>
               <span class="ti-label">{{ v.label }}</span>
-              <span v-if="v.id !== baselineVariantId" data-testid="variant-points" class="variant-points-badge">
+              <span v-if="v.id !== baselineVariantId" data-testid="variant-points" data-tour="variant-points" class="variant-points-badge">
                 {{ variantPoints[v.id] ?? 0 }} Pkt
+              </span>
+              <span v-if="autosave.isLinked(v.id)"
+                :title="autosave.getStatus(v.id).message || 'Autosave aktiv'"
+                style="font-size:10px;margin-left:2px">
+                {{ { idle: '○', saving: '⏳', saved: '✓', error: '⚠' }[autosave.getStatus(v.id).status] }}
               </span>
               <span style="font-size:10px;color:var(--text3)">{{ v.nodes?.length ?? 0 }} root</span>
               <button
@@ -692,18 +799,35 @@ function doExport() {
           </div>
           <!-- Server-Aktionen -->
           <div style="margin-top:12px;display:flex;flex-direction:column;gap:6px">
-            <button class="btn btn-sm btn-primary" @click="saveVariantToServer">↑ Auf Server speichern</button>
+            <button data-tour="autosave-btn" class="btn btn-sm btn-primary"
+              :title="autosaveButtonTooltip"
+              @click="saveVariantToServer">
+              {{ autosaveButtonLabel }}
+            </button>
             <button class="btn btn-sm" @click="loadVariantFromServer">↓ Variante laden</button>
             <button class="btn btn-sm" @click="loadOriginalFromServer">↓ Original laden</button>
           </div>
         </div>
         <div class="panel-footer">
+          <button class="btn btn-sm" style="width:100%;margin-bottom:10px" @click="showOnboarding = true" title="Einführung erneut anzeigen">
+            ❓ Tour starten
+          </button>
           <div style="font-size:11px;color:var(--text3);line-height:1.6">
             <strong style="color:var(--text2)">Workflow:</strong><br>
-            1. Original laden, leeres Template löschen<br>
-            2. Neue Variante anlegen und mit einem einmaligen Namen versehen<br>
-            3. Variante bearbeiten<br>
-            4. Variante Auf Server speichern
+            1. Neue Variante anlegen und mit einem einmaligen Namen versehen<br>
+            2. Variante bearbeiten<br>
+            3. Variante Auf Server speichern, danach Autosave aktiviert<br>
+            © <a href="mailto:post@renecol.org" style="margin-left:8px;vertical-align:middle; opacity: 0.5;">Peter Bernstein, 2026</a>
+            <a href="https://www.linkedin.com/in/peter-bernstein-renecol" target="_blank" rel="noopener noreferrer" style="margin-left:8px;vertical-align:middle; opacity: 0.5;" aria-label="LinkedIn">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle">
+                <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-9h3v9zm-1.5-10.271c-.966 0-1.75-.79-1.75-1.764 0-.974.784-1.765 1.75-1.765s1.75.791 1.75 1.765c0 .974-.784 1.764-1.75 1.764zm13.5 10.271h-3v-4.5c0-1.072-.02-2.45-1.494-2.45-1.496 0-1.727 1.17-1.727 2.377v4.573h-3v-9h2.879v1.233h.041c.401-.759 1.379-1.56 2.838-1.56 3.036 0 3.6 1.998 3.6 4.593v5.734z"/>
+              </svg>
+            </a>
+              <a href="https://github.com/bernspe/qbuilder3" target="_blank" rel="noopener noreferrer" style="margin-left:8px;vertical-align:middle; opacity: 0.5;" aria-label="GitHub" title="GitHub">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle">
+                <path d="M12 .5C5.73.5.5 5.73.5 12c0 5.08 3.29 9.38 7.86 10.9.57.1.78-.25.78-.55 0-.27-.01-1-.02-1.96-3.2.7-3.88-1.38-3.88-1.38-.52-1.32-1.27-1.67-1.27-1.67-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.02 1.75 2.68 1.24 3.33.95.1-.74.4-1.24.73-1.52-2.56-.29-5.26-1.28-5.26-5.7 0-1.26.45-2.29 1.18-3.1-.12-.29-.51-1.47.11-3.06 0 0 .96-.31 3.14 1.18.91-.25 1.9-.38 2.88-.38s1.97.13 2.88.38c2.18-1.49 3.14-1.18 3.14-1.18.62 1.59.23 2.77.11 3.06.73.81 1.18 1.84 1.18 3.1 0 4.43-2.71 5.4-5.29 5.68.41.36.77 1.08.77 2.18 0 1.57-.01 2.84-.01 3.23 0 .3.21.66.79.55C20.71 21.38 24 17.08 24 12c0-6.27-5.73-11.5-12-11.5z"/>
+              </svg>
+            </a>
           </div>
         </div>
       </div>
@@ -712,7 +836,13 @@ function doExport() {
     <!-- Status bar -->
     <div class="statusbar">
       <span>Variante: <strong>{{ qb.variants[qb.currentVariant.value]?.label }}</strong> · {{ qb.variantList.value.length }} Variante(n) insgesamt</span>
-      <span>Autosave · Undo/Redo: Strg+Z / Strg+Y</span>
+      <span>
+        {{ autosaveStatus.status === 'saved' ? '✓ Server-Sync' :
+           autosaveStatus.status === 'saving' ? '⏳ Speichert…' :
+           autosaveStatus.status === 'error' ? '⚠ Sync-Fehler' :
+           autosave.isLinked(qb.currentVariant.value) ? '○ Autosave aktiv' : 'Autosave (lokal)' }}
+        · Undo/Redo: Strg+Z / Strg+Y
+      </span>
     </div>
 
     <!-- Modals -->
@@ -726,6 +856,13 @@ function doExport() {
       v-if="showImport"
       @close="showImport = false"
       @import="handleImport"
+    />
+
+    <!-- Onboarding -->
+    <OnboardingModal
+      v-if="showOnboarding"
+      @close="closeOnboarding"
+      @activate="({ panel, tab }) => { if (panel) activePanel = panel; if (tab) activeTab = tab }"
     />
 
     <!-- Toasts -->

@@ -1,0 +1,284 @@
+══════════════════════════════════════════════════════════════════════
+QBuilder3  –  Varianten-Analyse
+══════════════════════════════════════════════════════════════════════
+
+──────────────────────────────────────────────────────────────────────
+1. GESAMTPUNKTZAHL PRO VARIANTE
+──────────────────────────────────────────────────────────────────────
+
+   1. peter                          59 Pkt  ███████████
+   2. mina                           34 Pkt  ██████
+   3. anja                           32 Pkt  ██████
+   4. ringo                           4 Pkt  
+
+──────────────────────────────────────────────────────────────────────
+2. DETAILS PRO VARIANTE
+──────────────────────────────────────────────────────────────────────
+
+  ▸ peter  (59 Pkt)
+    Geänderte Items (2):
+      ~ Stehen                               [question]  +2 Pkt  icon(↑)
+      ~ In einer Körperposition verbleiben   [icf]  +1 Pkt  question(~)
+    Bewertete Items (14):
+      ★ Stehen                               [question]  +4 Pkt  Wichtigkeit: 4  Verständlichkeit: 4
+      ★ In einer Körperposition verbleiben   [icf]  +4 Pkt  Wichtigkeit: 4  Verständlichkeit: 3
+      ★ Haushalt                             [question]  +4 Pkt  Wichtigkeit: 4  Verständlichkeit: 4
+      ★ Waren und Dienstleistungen des tägli [icf]  +4 Pkt  Wichtigkeit: 4  Verständlichkeit: 4
+      ★ Mahlzeiten vorbereiten               [icf]  +4 Pkt  Wichtigkeit: 4  Verständlichkeit: 3
+      ★ Hausarbeiten erledigen               [icf]  +4 Pkt  Wichtigkeit: 3  Verständlichkeit: 5
+      ★ Haushaltsgegenstände pflegen         [icf]  +4 Pkt  Wichtigkeit: 4  Verständlichkeit: 4
+      ★ Anderen helfen                       [icf]  +4 Pkt  Wichtigkeit: 4  Verständlichkeit: 3
+      ★ Lernen                               [question]  +4 Pkt  Wichtigkeit: 5  Verständlichkeit: 4
+      ★ Sich Fertigkeiten aneignen           [icf]  +4 Pkt  Wichtigkeit: 4  Verständlichkeit: 3
+      ★ Aufmerksamkeit fokussieren           [icf]  +4 Pkt  Wichtigkeit: 4  Verständlichkeit: 3
+      ★ Probleme lösen                       [icf]  +4 Pkt  Wichtigkeit: 4  Verständlichkeit: 5
+      ★ Gesellschaft                         [question]  +4 Pkt  Wichtigkeit: 4  Verständlichkeit: 3
+      ★ Gemeinschaftsleben                   [icf]  +4 Pkt  Wichtigkeit: 4  Verständlichkeit: 4
+    Unverändert / nicht bewertet: 77
+
+  ▸ mina  (34 Pkt)
+    Neue Items (1):
+      + Ernährungssicherheit                       [question]  +10 Pkt
+    Bewertete Items (6):
+      ★ Stehen                               [question]  +4 Pkt  Wichtigkeit: 5  Verständlichkeit: 5
+      ★ In einer Körperposition verbleiben   [icf]  +4 Pkt  Wichtigkeit: 5  Verständlichkeit: 5
+      ★ Haushalt                             [question]  +4 Pkt  Wichtigkeit: 5  Verständlichkeit: 5
+      ★ Waren und Dienstleistungen des tägli [icf]  +4 Pkt  Wichtigkeit: 5  Verständlichkeit: 5
+      ★ Mahlzeiten vorbereiten               [icf]  +4 Pkt  Wichtigkeit: 5  Verständlichkeit: 5
+      ★ Elementare wirtschaftliche Transakti [icf]  +4 Pkt  Wichtigkeit: 5  Verständlichkeit: 5
+    Unverändert / nicht bewertet: 85
+
+  ▸ anja  (32 Pkt)
+    Geänderte Items (3):
+      ~ Lernen                               [question]  +2 Pkt  icon(↑)
+      ~ Anderen helfen                       [icf]  +1 Pkt  question(~)
+      ~ Sich Fertigkeiten aneignen           [icf]  +1 Pkt  question(~)
+    Bewertete Items (7):
+      ★ Stehen                               [question]  +4 Pkt  Wichtigkeit: 5  Verständlichkeit: 4
+      ★ In einer Körperposition verbleiben   [icf]  +4 Pkt  Wichtigkeit: 4  Verständlichkeit: 4
+      ★ Haushalt                             [question]  +4 Pkt  Wichtigkeit: 5  Verständlichkeit: 4
+      ★ Waren und Dienstleistungen des tägli [icf]  +4 Pkt  Wichtigkeit: 5  Verständlichkeit: 5
+      ★ Mahlzeiten vorbereiten               [icf]  +4 Pkt  Wichtigkeit: 4  Verständlichkeit: 4
+      ★ Hausarbeiten erledigen               [icf]  +4 Pkt  Wichtigkeit: 4  Verständlichkeit: 4
+      ★ Haushaltsgegenstände pflegen         [icf]  +4 Pkt  Wichtigkeit: 4  Verständlichkeit: 4
+    Unverändert / nicht bewertet: 81
+
+  ▸ ringo  (4 Pkt)
+    Geänderte Items (3):
+      ~ Lernen                               [question]  +2 Pkt  icon(↑)
+      ~ Anderen helfen                       [icf]  +1 Pkt  question(~)
+      ~ Sich Fertigkeiten aneignen           [icf]  +1 Pkt  question(~)
+    Unverändert / nicht bewertet: 88
+
+──────────────────────────────────────────────────────────────────────
+3. NODE-BEITRAG: ÜBER-/UNTERDURCHSCHNITTLICH  (über alle Varianten)
+──────────────────────────────────────────────────────────────────────
+   Gesamtpunkte = Feldänderungen + Rating-Punkte
+
+  Gesamtdurchschnitt:  0.33 Pkt / Variante
+
+  Überdurchschnittlich (15 Nodes):
+    ↑ Stehen                                       [question]  Ø 3.5 Pkt
+    ↑ In einer Körperposition verbleiben           [icf]  Ø 3.2 Pkt
+    ↑ Haushalt                                     [question]  Ø 3.0 Pkt
+    ↑ Waren und Dienstleistungen des täglichen Bed [icf]  Ø 3.0 Pkt
+    ↑ Mahlzeiten vorbereiten                       [icf]  Ø 3.0 Pkt
+    ↑ Hausarbeiten erledigen                       [icf]  Ø 2.0 Pkt
+    ↑ Haushaltsgegenstände pflegen                 [icf]  Ø 2.0 Pkt
+    ↑ Lernen                                       [question]  Ø 2.0 Pkt
+    ↑ Anderen helfen                               [icf]  Ø 1.5 Pkt
+    ↑ Sich Fertigkeiten aneignen                   [icf]  Ø 1.5 Pkt
+    ↑ Aufmerksamkeit fokussieren                   [icf]  Ø 1.0 Pkt
+    ↑ Probleme lösen                               [icf]  Ø 1.0 Pkt
+    ↑ Gesellschaft                                 [question]  Ø 1.0 Pkt
+    ↑ Gemeinschaftsleben                           [icf]  Ø 1.0 Pkt
+    ↑ Elementare wirtschaftliche Transaktionen     [icf]  Ø 1.0 Pkt
+
+  Unterdurchschnittlich – mit Beitrag (0 Nodes):
+
+  Kein Beitrag in keiner Variante (76 Nodes):
+    ○ Erholung und Freizeit                        [icf]
+    ○ Religion und Spiritualität                   [icf]
+    ○ Politisches Leben und Staatsbürgerschaft     [icf]
+    ○ Belastung                                    [question]
+    ○ Konzentrieren                                [question]
+    ○ Aufmerksamkeit fokussieren                   [icf]
+    ○ Probleme lösen                               [icf]
+    ○ Kommunizieren als Empfänger gesprochener Mit [icf]
+    ○ Kommunizieren als Empfänger schriftlicher Mi [icf]
+    ○ Konversation                                 [icf]
+    ○ Diskussion                                   [icf]
+    ○ Laufen                                       [question]
+    ○ Gehen                                        [icf]
+    ○ Sich auf andere Weise fortbewegen            [icf]
+    ○ Sich in verschiedenen Umgebungen fortbewegen [icf]
+    ○ Waschen                                      [question]
+    ○ Sich waschen                                 [icf]
+    ○ Seine Körperteile pflegen                    [icf]
+    ○ Die Toilette benutzen                        [icf]
+    ○ Anziehen                                     [question]
+    ○ Sich kleiden                                 [icf]
+    ○ Unterhalten                                  [question]
+    ○ Komplexe interpersonelle Interaktionen       [icf]
+    ○ Mit Fremden umgehen                          [icf]
+    ○ Formelle Beziehungen                         [icf]
+    ○ Freundschaft                                 [question]
+    ○ Informelle soziale Beziehungen               [icf]
+    ○ Intime Beziehungen                           [icf]
+    ○ Arbeit                                       [question]
+    ○ Schulbildung                                 [icf]
+    ○ Theoretische Berufsausbildung                [icf]
+    ○ Höhere Bildung und Ausbildung                [icf]
+    ○ Vorbereitung auf Erwerbstätigkeit            [icf]
+    ○ Eine Arbeit erhalten, behalten und beenden   [icf]
+    ○ Bezahlte Tätigkeit                           [icf]
+    ○ Unbezahlte Tätigkeit                         [icf]
+    ○ Komplexe wirtschaftliche Transaktionen       [icf]
+    ○ Wirtschaftliche Eigenständigkeit             [icf]
+    ○ Wohnung                                      [question]
+    ○ Wohnungslos                                  [subquestion]
+    ○ Wohnungskosten                               [subquestion]
+    ○ Wohnungsqualität                             [subquestion]
+    ○ Wohnungsimmissionen                          [subquestion]
+    ○ Materielle Sicherheit                        [question]
+    ○ Überschuldung                                [subquestion]
+    ○ Monatsende                                   [subquestion]
+    ○ Heizung                                      [subquestion]
+    ○ Urlaub                                       [subquestion]
+    ○ Unerwartete Ausgaben                         [subquestion]
+    ○ Möbel                                        [subquestion]
+    ○ Kleidung                                     [subquestion]
+    ○ Schuhe                                       [subquestion]
+    ○ Restaurant                                   [subquestion]
+    ○ Freizeit                                     [subquestion]
+    ○ Belohnung                                    [subquestion]
+    ○ Internetzugang                               [subquestion]
+    ○ Wohnumfeld                                   [question]
+    ○ Auto                                         [subquestion]
+    ○ Umweltverschmutzung                          [subquestion]
+    ○ Kriminalität                                 [subquestion]
+    ○ Gesundheitsversorgung                        [question]
+    ○ Ernährungssicherheit                         [question]
+    ○ Ernährungssorgen                             [subquestion]
+    ○ Ungesundes Essen                             [subquestion]
+    ○ Wenig Auswahl                                [subquestion]
+    ○ Mahlzeiten weglassen                         [subquestion]
+    ○ Kleinere Portionen                           [subquestion]
+    ○ Leerer Kühlschrank                           [subquestion]
+    ○ Hunger                                       [subquestion]
+    ○ Tag ohne Mahlzeit                            [subquestion]
+    ○ Diskriminierung                              [question]
+    ○ Öffentliche Einrichtungen                    [question]
+    ○ Soziale Kontakte                             [question]
+    ○ Technik                                      [question]
+    ○ Computer vorhanden?                          [question]
+    ○ Spiritualität                                [question]
+
+──────────────────────────────────────────────────────────────────────
+4. RATING-STATISTIK  (Wichtigkeit / Verständlichkeit)
+──────────────────────────────────────────────────────────────────────
+
+  Ø Wichtigkeit gesamt:         4.33
+  Ø Verständlichkeit gesamt:    4.11
+
+  Node                                         Typ          Ø Wicht.   Ø Verst.   n
+  ──────────────────────────────────────────── ──────────── ────────── ────────── ────
+  Lernen                                       question     5.0        4.0        1
+  Elementare wirtschaftliche Transaktionen     icf          5.0        5.0        1
+  Haushalt                                     question     4.7        4.3        3
+  Waren und Dienstleistungen des täglichen Bed icf          4.7        4.7        3
+  Stehen                                       question     4.7        4.3        3
+  In einer Körperposition verbleiben           icf          4.3        4.0        3
+  Mahlzeiten vorbereiten                       icf          4.3        4.0        3
+  Haushaltsgegenstände pflegen                 icf          4.0        4.0        2
+  Aufmerksamkeit fokussieren                   icf          4.0        3.0        1
+  Gemeinschaftsleben                           icf          4.0        4.0        1
+  Anderen helfen                               icf          4.0        3.0        1
+  Probleme lösen                               icf          4.0        5.0        1
+  Gesellschaft                                 question     4.0        3.0        1
+  Sich Fertigkeiten aneignen                   icf          4.0        3.0        1
+  Hausarbeiten erledigen                       icf          3.5        4.5        2
+
+  Unterdurchschnittliche Wichtigkeit:
+    ↓ Hausarbeiten erledigen                       Ø 3.5  (Ges.-Ø 4.3)
+    ↓ Haushaltsgegenstände pflegen                 Ø 4.0  (Ges.-Ø 4.3)
+    ↓ Aufmerksamkeit fokussieren                   Ø 4.0  (Ges.-Ø 4.3)
+    ↓ Gemeinschaftsleben                           Ø 4.0  (Ges.-Ø 4.3)
+    ↓ Anderen helfen                               Ø 4.0  (Ges.-Ø 4.3)
+    ↓ Probleme lösen                               Ø 4.0  (Ges.-Ø 4.3)
+    ↓ Gesellschaft                                 Ø 4.0  (Ges.-Ø 4.3)
+    ↓ Sich Fertigkeiten aneignen                   Ø 4.0  (Ges.-Ø 4.3)
+
+  Unterdurchschnittliche Verständlichkeit:
+    ↓ Aufmerksamkeit fokussieren                   Ø 3.0  (Ges.-Ø 4.1)
+    ↓ Anderen helfen                               Ø 3.0  (Ges.-Ø 4.1)
+    ↓ Gesellschaft                                 Ø 3.0  (Ges.-Ø 4.1)
+    ↓ Sich Fertigkeiten aneignen                   Ø 3.0  (Ges.-Ø 4.1)
+    ↓ Lernen                                       Ø 4.0  (Ges.-Ø 4.1)
+    ↓ Haushaltsgegenstände pflegen                 Ø 4.0  (Ges.-Ø 4.1)
+    ↓ Gemeinschaftsleben                           Ø 4.0  (Ges.-Ø 4.1)
+    ↓ In einer Körperposition verbleiben           Ø 4.0  (Ges.-Ø 4.1)
+    ↓ Mahlzeiten vorbereiten                       Ø 4.0  (Ges.-Ø 4.1)
+
+──────────────────────────────────────────────────────────────────────
+5. NODE-BEITRAG PRO VARIANTE
+──────────────────────────────────────────────────────────────────────
+
+  ▸ peter  (Varianten-Ø 0.6 Pkt)
+    Überdurchschnittlich:
+      ↑ Stehen                                       +6 Pkt
+      ↑ In einer Körperposition verbleiben           +5 Pkt
+      ↑ Haushalt                                     +4 Pkt
+      ↑ Waren und Dienstleistungen des täglichen Bed +4 Pkt
+      ↑ Mahlzeiten vorbereiten                       +4 Pkt
+      ↑ Hausarbeiten erledigen                       +4 Pkt
+      ↑ Haushaltsgegenstände pflegen                 +4 Pkt
+      ↑ Anderen helfen                               +4 Pkt
+      ↑ Lernen                                       +4 Pkt
+      ↑ Sich Fertigkeiten aneignen                   +4 Pkt
+      ↑ Aufmerksamkeit fokussieren                   +4 Pkt
+      ↑ Probleme lösen                               +4 Pkt
+      ↑ Gesellschaft                                 +4 Pkt
+      ↑ Gemeinschaftsleben                           +4 Pkt
+
+  ▸ mina  (Varianten-Ø 0.3 Pkt)
+    Überdurchschnittlich:
+      ↑ Stehen                                       +4 Pkt
+      ↑ In einer Körperposition verbleiben           +4 Pkt
+      ↑ Haushalt                                     +4 Pkt
+      ↑ Waren und Dienstleistungen des täglichen Bed +4 Pkt
+      ↑ Mahlzeiten vorbereiten                       +4 Pkt
+      ↑ Elementare wirtschaftliche Transaktionen     +4 Pkt
+
+  ▸ anja  (Varianten-Ø 0.4 Pkt)
+    Überdurchschnittlich:
+      ↑ Stehen                                       +4 Pkt
+      ↑ In einer Körperposition verbleiben           +4 Pkt
+      ↑ Haushalt                                     +4 Pkt
+      ↑ Waren und Dienstleistungen des täglichen Bed +4 Pkt
+      ↑ Mahlzeiten vorbereiten                       +4 Pkt
+      ↑ Hausarbeiten erledigen                       +4 Pkt
+      ↑ Haushaltsgegenstände pflegen                 +4 Pkt
+      ↑ Lernen                                       +2 Pkt
+      ↑ Anderen helfen                               +1 Pkt
+      ↑ Sich Fertigkeiten aneignen                   +1 Pkt
+
+  ▸ ringo  (Varianten-Ø 0.0 Pkt)
+    Überdurchschnittlich:
+      ↑ Lernen                                       +2 Pkt
+      ↑ Anderen helfen                               +1 Pkt
+      ↑ Sich Fertigkeiten aneignen                   +1 Pkt
+
+──────────────────────────────────────────────────────────────────────
+6. MEISTGEÄNDERTE ITEMS  (Feldänderungen über alle Varianten)
+──────────────────────────────────────────────────────────────────────
+
+  Item                                     Typ          Änd.    Felder (Häufigkeit)
+  ──────────────────────────────────────── ──────────── ──────  ──────────────────────────────
+  Anderen helfen                           icf          2       question×2
+  Lernen                                   question     2       icon×2
+  Sich Fertigkeiten aneignen               icf          2       question×2
+  Stehen                                   question     1       icon×1
+  In einer Körperposition verbleiben       icf          1       question×1
+
+══════════════════════════════════════════════════════════════════════
