@@ -102,7 +102,7 @@ const questionPreviewOptions = computed(() => {
 
       <!-- ══ ICF-ITEM ══ -->
       <template v-if="node.type === 'icf'">
-        <div class="field">
+        <div class="field" data-tour="icf-code-field">
           <label>ICF-Code</label>
           <input
             type="text"
@@ -131,23 +131,25 @@ const questionPreviewOptions = computed(() => {
           <textarea :value="node.subheading ?? ''" @input="update('subheading', $event.target.value)" rows="2"></textarea>
         </div>
 
-        <div class="field">
-          <label>Fragetext</label>
-          <textarea
-            :value="node.question ?? ''"
-            @input="update('question', $event.target.value)"
-            rows="2"
-            placeholder="z.B. Wie stark haben Sie Schwierigkeiten mit ...?"
-          ></textarea>
-        </div>
+        <div data-tour="icf-question-field">
+          <div class="field">
+            <label>Fragetext</label>
+            <textarea
+              :value="node.question ?? ''"
+              @input="update('question', $event.target.value)"
+              rows="2"
+              placeholder="z.B. Wie stark haben Sie Schwierigkeiten mit ...?"
+            ></textarea>
+          </div>
 
-        <div v-if="icfLookup?.fragen?.length" class="field">
-          <label>Beispielfragen (klicken zum Übernehmen)</label>
-          <ul class="icf-suggestions">
-            <li v-for="(frage, i) in icfLookup.fragen" :key="i" @click="update('question', frage)">
-              {{ frage }}
-            </li>
-          </ul>
+          <div v-if="icfLookup?.fragen?.length" class="field">
+            <label>Beispielfragen (klicken zum Übernehmen)</label>
+            <ul class="icf-suggestions">
+              <li v-for="(frage, i) in icfLookup.fragen" :key="i" @click="update('question', frage)">
+                {{ frage }}
+              </li>
+            </ul>
+          </div>
         </div>
 
         <div class="field">
@@ -347,7 +349,7 @@ const questionPreviewOptions = computed(() => {
             <textarea
               class="option-list-input"
               :value="(node.options ?? []).join('\n')"
-              @input="update('options', $event.target.value.split('\n').map(s => s.trim()).filter(Boolean))"
+              @change="update('options', $event.target.value.split('\n').map(s => s.trim()).filter(Boolean))"
               rows="5"
               placeholder="Option A&#10;Option B&#10;Option C"
             ></textarea>
@@ -443,7 +445,7 @@ const questionPreviewOptions = computed(() => {
 
     <!-- Add-Child Buttons -->
     <template v-if="!readonly">
-      <div v-if="node.type === 'question'" class="btn-group" style="margin-top:4px">
+      <div v-if="node.type === 'question'" class="btn-group" style="margin-top:4px" data-tour="add-subquestion">
         <button class="btn" @click="emit('add-child', { type: 'subquestion', parentId: node.id })">+ Unterfrage</button>
         <button class="btn" @click="emit('add-child', { type: 'icf', parentId: node.id })">+ ICF-Item</button>
       </div>

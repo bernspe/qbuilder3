@@ -129,6 +129,7 @@ const selectedNode = computed(() => {
   if (!selectedId.value) return null
   return qb.findInVariant(selectedId.value)
 })
+const selectedNodeType = computed(() => selectedNode.value?.type ?? null)
 
 const baselineVariantId = computed(() => qb.variantList.value[0]?.id)
 const isMainVariant = computed(() => qb.currentVariant.value === baselineVariantId.value)
@@ -867,6 +868,7 @@ function doExport() {
       v-if="showOnboarding"
       :variant-count="qb.variantList.value.length"
       :selected-id="selectedId"
+      :selected-node-type="selectedNodeType"
       :active-tab="activeTab"
       :current-variant-linked="autosave.isLinked(qb.currentVariant.value)"
       :rating-count="ratingCount"

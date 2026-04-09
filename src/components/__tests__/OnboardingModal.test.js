@@ -20,9 +20,11 @@ function defaultProps(overrides = {}) {
   return {
     variantCount:         1,
     selectedId:           null,
+    selectedNodeType:     null,
     activeTab:            'editor',
     currentVariantLinked: false,
     ratingCount:          0,
+    initialMode:          'full', // bypass choice screen in tests
     ...overrides,
   }
 }
@@ -73,21 +75,83 @@ describe('Interaktive Schritte – auto-advance', () => {
     expect(wrapper.find('.onboarding-title').text()).not.toBe('Auf dem Server speichern')
   })
 
-  it('Step 4 (Frage auswählen): advance wenn selectedId gesetzt wird', async () => {
+  it('Step 4 (Screeningfrage auswählen): advance wenn selectedNodeType question wird', async () => {
     const wrapper = mount(OnboardingModal, {
       props: defaultProps({ initialStep: 4 })
     })
     await flushPromises()
-    expect(wrapper.find('.onboarding-title').text()).toBe('Frage auswählen')
+    expect(wrapper.find('.onboarding-title').text()).toBe('Screeningfrage auswählen')
 
-    await triggerAdvance(wrapper, { selectedId: 'n1_abc' })
+    await triggerAdvance(wrapper, { selectedId: 'n1_abc', selectedNodeType: 'question' })
 
-    expect(wrapper.find('.onboarding-title').text()).not.toBe('Frage auswählen')
+    expect(wrapper.find('.onboarding-title').text()).not.toBe('Screeningfrage auswählen')
   })
 
-  it('Step 11 (Vorschau Tab): advance wenn activeTab preview wird', async () => {
+  it('Step 4: KEIN advance wenn falscher Typ selektiert wird', async () => {
+    const wrapper = mount(OnboardingModal, {
+      props: defaultProps({ initialStep: 4 })
+    })
+    await flushPromises()
+
+    await triggerAdvance(wrapper, { selectedId: 'n1_abc', selectedNodeType: 'section' })
+
+    expect(wrapper.find('.onboarding-title').text()).toBe('Screeningfrage auswählen')
+  })
+
+  it('Step 4: Warnung sichtbar wenn falscher Typ selektiert', async () => {
+    const wrapper = mount(OnboardingModal, {
+      props: defaultProps({ initialStep: 4, selectedId: 'n1_abc', selectedNodeType: 'section' })
+    })
+    await flushPromises()
+    expect(wrapper.find('[data-testid="tour-warning"]').exists()).toBe(true)
+  })
+
+  it('Step 17 (ICF): KEIN advance wenn falscher Typ selektiert wird', async () => {
+    const wrapper = mount(OnboardingModal, {
+      props: defaultProps({ initialStep: 17 })
+    })
+    await flushPromises()
+
+    await triggerAdvance(wrapper, { selectedId: 'n1_abc', selectedNodeType: 'question' })
+
+    expect(wrapper.find('.onboarding-title').text()).toBe('ICF-Item auswählen')
+  })
+
+  it('Step 17: Warnung sichtbar wenn falscher Typ selektiert', async () => {
+    const wrapper = mount(OnboardingModal, {
+      props: defaultProps({ initialStep: 17, selectedId: 'n1_abc', selectedNodeType: 'question' })
+    })
+    await flushPromises()
+    expect(wrapper.find('[data-testid="tour-warning"]').exists()).toBe(true)
+  })
+
+  it('Step 11 (Unterfrage): advance wenn selectedNodeType subquestion wird', async () => {
     const wrapper = mount(OnboardingModal, {
       props: defaultProps({ initialStep: 11 })
+    })
+    await flushPromises()
+    expect(wrapper.find('.onboarding-title').text()).toBe('Unterfrage hinzufügen')
+
+    await triggerAdvance(wrapper, { selectedNodeType: 'subquestion' })
+
+    expect(wrapper.find('.onboarding-title').text()).not.toBe('Unterfrage hinzufügen')
+  })
+
+  it('Step 17 (ICF auswählen): advance wenn selectedNodeType icf wird', async () => {
+    const wrapper = mount(OnboardingModal, {
+      props: defaultProps({ initialStep: 17 })
+    })
+    await flushPromises()
+    expect(wrapper.find('.onboarding-title').text()).toBe('ICF-Item auswählen')
+
+    await triggerAdvance(wrapper, { selectedNodeType: 'icf' })
+
+    expect(wrapper.find('.onboarding-title').text()).not.toBe('ICF-Item auswählen')
+  })
+
+  it('Step 21 (Vorschau Tab): advance wenn activeTab preview wird', async () => {
+    const wrapper = mount(OnboardingModal, {
+      props: defaultProps({ initialStep: 21 })
     })
     await flushPromises()
     expect(wrapper.find('.onboarding-title').text()).toBe('Vorschau-Tab öffnen')
@@ -97,9 +161,9 @@ describe('Interaktive Schritte – auto-advance', () => {
     expect(wrapper.find('.onboarding-title').text()).not.toBe('Vorschau-Tab öffnen')
   })
 
-  it('Step 12 (Rating): advance wenn ratingCount zunimmt', async () => {
+  it('Step 22 (Rating): advance wenn ratingCount zunimmt', async () => {
     const wrapper = mount(OnboardingModal, {
-      props: defaultProps({ initialStep: 12 })
+      props: defaultProps({ initialStep: 22 })
     })
     await flushPromises()
     expect(wrapper.find('.onboarding-title').text()).toBe('Items bewerten')
@@ -109,9 +173,9 @@ describe('Interaktive Schritte – auto-advance', () => {
     expect(wrapper.find('.onboarding-title').text()).not.toBe('Items bewerten')
   })
 
-  it('Step 12: KEIN advance wenn ratingCount gleich bleibt', async () => {
+  it('Step 22: KEIN advance wenn ratingCount gleich bleibt', async () => {
     const wrapper = mount(OnboardingModal, {
-      props: defaultProps({ initialStep: 12 })
+      props: defaultProps({ initialStep: 22 })
     })
     await flushPromises()
 
@@ -184,9 +248,9 @@ describe('Button-Sichtbarkeit', () => {
     expect(wrapper.find('[data-testid="tour-hint"]').exists()).toBe(true)
   })
 
-  it('Letzter Schritt (15): Starten-Button statt Weiter', async () => {
+  it('Letzter Schritt (26): Starten-Button statt Weiter', async () => {
     const wrapper = mount(OnboardingModal, {
-      props: defaultProps({ initialStep: 15 })
+      props: defaultProps({ initialStep: 26 })
     })
     await flushPromises()
     expect(wrapper.find('[data-testid="finish-btn"]').exists()).toBe(true)

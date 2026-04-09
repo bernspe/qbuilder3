@@ -14,10 +14,17 @@ Die User Journey umfasst die folgenden Schritte:
    8. Question
    9. Answers (Erklären, wie die Optionen angelegt werden können und wie die RIchtung gut -> schlecht oder schlecht -> gut eingestellt werden kann)
    10. Referenz (Kommt diese Frage aus einem validierten Fragebogen?). 
-11. In der Vorschau können die Fragen in der Preview angesehen werden. HIGHLIGHT auf die Tab-Auswahl Vorschau, Einfordern der Nutzeraktion
-12. danach HIGHLIGHT auf die Rating-Felder für die aktuell selektionierte Frage.
-13. Hat der Nutzer mitbekommen, dass er Punkte für seine Aktionen bekommen hat?
-14. Alle Aktionen können mit dem Undo-Button rückgängig gemacht werden.
-15. Alle Änderungen werden automatisch gespeichert.
+   11. Danach HIGHLIGHT auf den Button "Neue Unterfrage" und Aufforderung an den Nutzer eine Unterfrage hinzuzufügen, um präzisere Informationen zu erlangen.
+   12. Danach erfolgt der gleiche Run-Through für die Unterfrage, beginnend mit Schritt 6. bis 10. Danach soll der Nutzer die Treeview öffnen
+13. Der Nutzer soll in der Treeview ein ICF-Item auswählen, um die ICF-Icons zu sehen. HIGHLIGHT auf die Treeview und Aufforderung an den Nutzer, ein ICF-Item auszuwählen.
+   14. Öffnen des Editors, damit die Bearbeitung eines ICF-Items vorgestellt werden kann.
+   15. HIGHLIGHT auf den ICF Code. Kurze Erklärung an den Nutzer, worum es sich hierbei handelt. Aufforderung an den Nutzer, dem Link zum ICF Mapper zu folgen, um die Möglichkeit kennenzulernen, aus normaler Sprache ICF Codes zu generieren.
+   16. HIGHLIGHT auf den Fragentext und die Beispielfragen mit der Aufforderung auf die Beispielfrage zu klicken, die am Besten zu dem Konzept des ICF Codes passt. Alternativ kann die Frage auch selbst formuliert werden. 
+17. In der Vorschau können die Fragen in der Preview angesehen werden. HIGHLIGHT auf die Tab-Auswahl Vorschau, Einfordern der Nutzeraktion
+18. danach HIGHLIGHT auf die Rating-Felder für die aktuell selektionierte Frage.
+19. Hat der Nutzer mitbekommen, dass er Punkte für seine Aktionen bekommen hat? 
+20. Alle Aktionen können mit dem Undo-Button rückgängig gemacht werden.
+21. Alle Änderungen werden automatisch gespeichert.
+22. Der Nutzer wird am Ende zum Treeview zurückgeführt - mit der Aufforderung weitere Fragen zu beantworten.
 
 Nach Eingang ausreichend vieler Varianten und Bewertungen wird eine finale Version der Fragebogendatenbank erstellt, die die Originale und die besten Varianten enthält.
