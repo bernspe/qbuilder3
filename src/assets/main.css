@@ -367,7 +367,13 @@ textarea { resize: vertical; min-height: 64px; line-height: 1.5; }
 .onboarding-body { text-align: center; padding: 0 4px; }
 .onboarding-icon { font-size: 38px; line-height: 1; margin-bottom: 12px; }
 .onboarding-title { font-size: 16px; font-weight: 600; margin-bottom: 8px; color: var(--text1); }
-.onboarding-text { font-size: 13px; color: var(--text2); line-height: 1.6; margin-bottom: 20px; min-height: 68px; }
+.onboarding-text { font-size: 13px; color: var(--text2); line-height: 1.6; margin-bottom: 10px; min-height: 68px; }
+.onboarding-link {
+  display: inline-block; margin-bottom: 12px;
+  font-size: 12px; font-weight: 500;
+  color: var(--primary, #2563eb); text-decoration: none;
+}
+.onboarding-link:hover { text-decoration: underline; }
 .onboarding-choice {
   display: flex; gap: 10px; margin-bottom: 4px;
 }

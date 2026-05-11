@@ -581,6 +581,12 @@ function doExport() {
         <button class="btn btn-sm" @click="showImport = true">↑ Import</button>
         <button class="btn btn-sm btn-primary" @click="doExport">↓ JSON Export</button>
       </div>
+      <div class="header-sep header-actions-desktop"></div>
+      <button
+        class="btn btn-sm"
+        @click="showOnboarding = true"
+        title="Einführungs-Tour starten"
+      >❓</button>
     </header>
 
     <!-- Tab bar (Editor/Vorschau/JSON) + Mobile Panel Tabs -->
@@ -814,9 +820,6 @@ function doExport() {
           </div>
         </div>
         <div class="panel-footer">
-          <button class="btn btn-sm" style="width:100%;margin-bottom:10px" @click="showOnboarding = true" title="Einführung erneut anzeigen">
-            ❓ Tour starten
-          </button>
           <div style="font-size:11px;color:var(--text3);line-height:1.6">
             <strong style="color:var(--text2)">Workflow:</strong><br>
             1. Neue Variante anlegen und mit einem einmaligen Namen versehen<br>

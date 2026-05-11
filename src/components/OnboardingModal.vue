@@ -30,6 +30,8 @@ const DESKTOP_STEPS = [
     title: 'Gemeinsam für eine bessere Zukunft',
     icon: '🌍',
     text: 'Das Erfassen von Teilhabestörungen ist der wichtigste Schritt, um der Gesellschaft zu helfen, das WARUM von Benachteiligung und das WIE des Lebens betroffener Menschen zu verstehen. Deine Aufgabe: das Original ergänzen, verfeinern und bewerten. Arbeiten wir gemeinsam an einer Zukunft füreinander!',
+    linkUrl: 'https://renecol.org/unkategorisiert/teilhabestoerungen/',
+    linkLabel: 'Was sind Teilhabestörungen? ↗',
   },
   // 1
   {
@@ -296,6 +298,8 @@ const MOBILE_STEPS = [
     title: 'Gemeinsam für eine bessere Zukunft',
     icon: '🌍',
     text: 'Das Erfassen von Teilhabestörungen ist der wichtigste Schritt, um der Gesellschaft zu helfen, das WARUM von Benachteiligung und das WIE des Lebens betroffener Menschen zu verstehen. Deine Aufgabe: das Original ergänzen, verfeinern und bewerten. Arbeiten wir gemeinsam an einer Zukunft füreinander!',
+    linkUrl: 'https://renecol.org/unkategorisiert/teilhabestoerungen/',
+    linkLabel: 'Was sind Teilhabestörungen? ↗',
   },
   // 1
   {
@@ -560,6 +564,8 @@ const QUICK_DESKTOP_STEPS = [
     type: 'info', selector: null, panel: null, tab: null,
     title: 'QBuilder auf einen Blick', icon: '🌍',
     text: 'Das Erfassen von Teilhabestörungen hilft der Gesellschaft, das WARUM von Benachteiligung zu verstehen. Deine Aufgabe: das Original ergänzen, verfeinern und bewerten.',
+    linkUrl: 'https://renecol.org/unkategorisiert/teilhabestoerungen/',
+    linkLabel: 'Was sind Teilhabestörungen? ↗',
   },
   {
     type: 'info', selector: '[data-tour="add-variant"]', panel: null, tab: null,
@@ -593,6 +599,8 @@ const QUICK_MOBILE_STEPS = [
     type: 'info', selector: null, panel: null, tab: null,
     title: 'QBuilder auf einen Blick', icon: '🌍',
     text: 'Das Erfassen von Teilhabestörungen hilft der Gesellschaft, das WARUM von Benachteiligung zu verstehen. Deine Aufgabe: das Original ergänzen, verfeinern und bewerten.',
+    linkUrl: 'https://renecol.org/unkategorisiert/teilhabestoerungen/',
+    linkLabel: 'Was sind Teilhabestörungen? ↗',
   },
   {
     type: 'info', selector: '[data-tour="add-variant"]', panel: 'variants', tab: null,
@@ -927,6 +935,13 @@ const modalStyle = computed(() => {
           <div class="onboarding-icon">{{ currentStep.icon }}</div>
           <h3 class="onboarding-title">{{ currentStep.title }}</h3>
           <p class="onboarding-text">{{ currentStep.text }}</p>
+          <a
+            v-if="currentStep.linkUrl"
+            :href="currentStep.linkUrl"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="onboarding-link"
+          >{{ currentStep.linkLabel }}</a>
         </div>
 
         <!-- Interactive hint (replaces Weiter button) -->

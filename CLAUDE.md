@@ -1,3 +1,5 @@
 - nutze für die Erstellung von Icons, Questions, Subquestions, ICF-Items Komponenten die Rules aus docs/ICONS_QUESTIONS_ICF.md
 - nutze VueUse für die Undo/Redo Funktionalität, VueUseCore useRefHistory
-- ignoriere das python directory
+- im python folder liegen Funktionen, die für die statistische Auswertung relevant sind 
+- Analyse-Funktionen sollen auch in der Vue-App verfügbar sein, als eigener Endpunkt, siehe docs/ANALYSIS.md
+- 
