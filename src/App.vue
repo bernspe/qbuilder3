@@ -12,6 +12,7 @@ import PreviewPanel from './components/PreviewPanel.vue'
 import MergeModal from './components/MergeModal.vue'
 import ImportModal from './components/ImportModal.vue'
 import OnboardingModal from './components/OnboardingModal.vue'
+import AnalysisView from './components/AnalysisView.vue'
 
 const qb = useQuestionnaire()
 const gamification = useGamification()
@@ -174,12 +175,14 @@ const ratingStats = computed(() => {
 const tabs = [
   { id: 'editor', label: 'Editor' },
   { id: 'preview', label: 'Vorschau' },
-  { id: 'json', label: 'JSON' }
+  { id: 'json', label: 'JSON' },
+  { id: 'analyse', label: '📊 Analyse' },
 ]
 
 // Sync JSON-Editor-Inhalt wenn Tab gewechselt oder Daten geändert werden
 watch(activeTab, (tab) => {
   if (tab === 'json') jsonEditContent.value = jsonPreview.value
+  if (tab === 'analyse') loadAllVariantsForAnalysis()
 })
 watch(jsonPreview, (val) => {
   if (!isApplyingJson) jsonEditContent.value = val
@@ -552,6 +555,57 @@ async function loadOriginalFromServer() {
   }
 }
 
+async function loadAllVariantsFromServer() {
+  try {
+    const serverVariants = await autosave.fetchServerVariants()
+    let loaded = 0
+    for (const name of serverVariants) {
+      if (qb.variants[name]) continue // bereits lokal vorhanden
+      const res = await fetch(`${uploadServer}/php/get_variant.php?name=${encodeURIComponent(name)}`)
+      if (!res.ok) continue
+      const raw = await res.text()
+      const parsed = JSON.parse(raw)
+      qb.importJSON(raw, name)
+      if (parsed.ratings) gamification.restoreVariantRatings(name, parsed.ratings)
+      autosave.markLinked(name)
+      autosave.recordSave(name, parsed.exportedAt ?? null)
+      if (parsed.exportedAt) autosave.setStatus(name, 'saved', parsed.exportedAt)
+      loaded++
+    }
+    showToast(loaded > 0 ? `${loaded} Variante(n) vom Server geladen` : 'Alle Varianten bereits lokal vorhanden')
+  } catch (err) {
+    showToast('Fehler beim Laden: ' + err.message)
+  }
+}
+
+// Analysis-only variants: loaded from server but NOT added to qb.variants
+// so they don't appear in the editor's variant panel
+const analysisOnlyVariants = ref({})
+
+async function loadAllVariantsForAnalysis() {
+  try {
+    const serverVariants = await autosave.fetchServerVariants()
+    const updates = {}
+    for (const name of serverVariants) {
+      if (qb.variants[name]) continue // own variant – already in qb.variants
+      try {
+        const res = await fetch(`${uploadServer}/php/get_variant.php?name=${encodeURIComponent(name)}`)
+        if (!res.ok) continue
+        const raw = await res.text()
+        const parsed = JSON.parse(raw)
+        const srcKey = Object.keys(parsed.variants ?? {})[0] ?? name
+        const data = parsed.variants?.[srcKey]
+        if (data) updates[name] = { id: name, label: data.label ?? name, nodes: data.nodes ?? [] }
+      } catch (_) {}
+    }
+    analysisOnlyVariants.value = updates
+  } catch (err) {
+    showToast('Fehler beim Laden: ' + err.message)
+  }
+}
+
+const analysisVariants = computed(() => ({ ...qb.variants, ...analysisOnlyVariants.value }))
+
 function doExport() {
   const json = qb.exportJSON()
   const blob = new Blob([json], { type: 'application/json' })
@@ -617,8 +671,17 @@ function doExport() {
       </div>
     </div>
 
+    <!-- Analysis view (full-width, replaces workspace) -->
+    <AnalysisView
+      v-if="activeTab === 'analyse'"
+      :variants="analysisVariants"
+      :baseline-id="baselineVariantId"
+      :load-all-from-server="loadAllVariantsForAnalysis"
+      style="flex:1;overflow:hidden"
+    />
+
     <!-- Main workspace -->
-    <div class="workspace" @touchstart.passive="onSwipeStart" @touchend.passive="onSwipeEnd">
+    <div v-else class="workspace" @touchstart.passive="onSwipeStart" @touchend.passive="onSwipeEnd">
       <!-- Left: Tree -->
       <div data-tour="structure-panel" class="panel" :class="{ 'panel--mobile-active': activePanel === 'structure' }">
         <div class="panel-header">
