@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, toRef } from 'vue'
 import { useAnalysis } from '../composables/useAnalysis.js'
 import SunburstChart from './SunburstChart.vue'
 import IconDisplay from './IconDisplay.vue'
@@ -28,7 +28,8 @@ watch(allVariantIds, () => {
 }, { immediate: true })
 
 const baselineIdRef = computed(() => localBaselineId.value)
-const { variantIds, computeHeatmap } = useAnalysis(props.variants, baselineIdRef)
+const variantsRef = toRef(props, 'variants')
+const { variantIds, computeHeatmap } = useAnalysis(variantsRef, baselineIdRef)
 
 // Variant selection
 const selectedVariants = ref([])

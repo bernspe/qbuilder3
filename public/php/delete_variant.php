@@ -12,7 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 $name = isset($_GET['name']) ? $_GET['name'] : '';
-if (!preg_match('/^[a-zA-Z0-9_\-]+$/', $name)) {
+if (!preg_match('/^[\p{L}0-9_\-]+$/u', $name)) {
     http_response_code(400);
     echo json_encode(['error' => 'Ungültiger Name']);
     exit;

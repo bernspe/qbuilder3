@@ -21,7 +21,7 @@ $filename = isset($_GET['filename']) ? $_GET['filename'] : '';
 if ($filename !== '') {
     // Sicherheit: Pfadtraversal und ungültige Dateinamen verhindern
     $filename = basename($filename);
-    if (!preg_match('/^[a-zA-Z0-9_\-]+\.json$/', $filename)) {
+    if (!preg_match('/^[\p{L}0-9_\-]+\.json$/u', $filename)) {
         http_response_code(400);
         echo json_encode(['error' => 'Ungültiger Dateiname. Nur Buchstaben, Zahlen, _ und - erlaubt.']);
         exit;

@@ -57,13 +57,14 @@ function diffNode(baseNode, variantMaps, selectedIds) {
   return { changeCount: changed.length, variantsChanged: changed }
 }
 
-export function useAnalysis(variants, baselineId) {
+export function useAnalysis(variantsRef, baselineId) {
   const variantIds = computed(() =>
-    Object.keys(variants).filter(id => id !== baselineId.value)
+    Object.keys(variantsRef.value).filter(id => id !== baselineId.value)
   )
 
   // Returns 3-level structure: sections → questions → items
   function computeHeatmap(selectedIds) {
+    const variants = variantsRef.value
     const baseline = variants[baselineId.value]
     if (!baseline) return []
 
