@@ -42,6 +42,45 @@ export function useQuestionnaire() {
     return false
   }
 
+  function extractNode(list, id) {
+    for (let i = 0; i < list.length; i++) {
+      if (list[i].id === id) return list.splice(i, 1)[0]
+      if (list[i].children) { const f = extractNode(list[i].children, id); if (f) return f }
+      if (list[i].branches) {
+        for (const b of list[i].branches) {
+          if (b.children) { const f = extractNode(b.children, id); if (f) return f }
+        }
+      }
+    }
+    return null
+  }
+
+  function findParentInVariant(childId, variant = currentVariant.value) {
+    function search(list, parent) {
+      for (const n of list) {
+        if (n.id === childId) return parent
+        if (n.children) { const f = search(n.children, n); if (f !== undefined) return f }
+        if (n.branches) {
+          for (const b of n.branches) {
+            if (b.children) { const f = search(b.children, n); if (f !== undefined) return f }
+          }
+        }
+      }
+      return undefined
+    }
+    return search(variants[variant]?.nodes ?? [], null)
+  }
+
+  function moveNode(nodeId, targetParentId) {
+    const node = extractNode(nodes.value, nodeId)
+    if (!node) return false
+    const target = findInVariant(targetParentId)
+    if (!target) return false
+    if (!target.children) target.children = []
+    target.children.push(node)
+    return true
+  }
+
   function makeNode(type, label) {
     const base = { id: uid(), type, label }
     if (type === 'section') return { ...base, children: [] }
@@ -180,7 +219,7 @@ export function useQuestionnaire() {
 
   return {
     variants, currentVariant, nodes, variantList,
-    findInVariant, addNode, deleteNode,
+    findInVariant, findParentInVariant, addNode, deleteNode, moveNode,
     addVariant, switchVariant, deleteVariant, renameVariant, mergeVariants,
     exportJSON, importJSON, countAll, loadFromStorage
   }

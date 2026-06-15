@@ -8,7 +8,7 @@ const props = defineProps({
   node: Object,
   readonly: { type: Boolean, default: false }
 })
-const emit = defineEmits(['update', 'delete', 'add-child'])
+const emit = defineEmits(['update', 'delete', 'add-child', 'move'])
 
 const typeIcon = computed(() => ({ section: '▸', question: '◉', subquestion: '○', icf: '⊞', branch: '⋱' }[props.node?.type] ?? ''))
 const typeLabel = computed(() => ({ section: 'Abschnitt', question: 'Screeningfrage', subquestion: 'Unterfrage', icf: 'ICF-Item', branch: 'Verzweigung' }[props.node?.type] ?? ''))
@@ -95,7 +95,15 @@ const questionPreviewOptions = computed(() => {
         {{ typeIcon }} {{ typeLabel }}
       </span>
       <span v-if="readonly" class="readonly-badge">Nur lesen</span>
-      <button v-else class="btn btn-danger btn-sm" @click="emit('delete', node.id)">Löschen</button>
+      <div v-else style="display:flex;gap:6px;align-items:center">
+        <button
+          v-if="['question','subquestion','icf'].includes(node.type)"
+          class="btn btn-sm"
+          title="In anderen Abschnitt / andere Frage verschieben"
+          @click="emit('move', node.id)"
+        >↕ Verschieben</button>
+        <button class="btn btn-danger btn-sm" @click="emit('delete', node.id)">Löschen</button>
+      </div>
     </div>
 
     <div class="card" :class="{ 'card--readonly': readonly }">

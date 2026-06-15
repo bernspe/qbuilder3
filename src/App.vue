@@ -11,6 +11,7 @@ import NodeEditor from './components/NodeEditor.vue'
 import PreviewPanel from './components/PreviewPanel.vue'
 import MergeModal from './components/MergeModal.vue'
 import ImportModal from './components/ImportModal.vue'
+import MoveModal from './components/MoveModal.vue'
 import OnboardingModal from './components/OnboardingModal.vue'
 import AnalysisView from './components/AnalysisView.vue'
 
@@ -21,6 +22,9 @@ const { toasts, show: showToast } = useToast()
 const selectedId = ref(null)
 const showMerge = ref(false)
 const showImport = ref(false)
+const showMove = ref(false)
+const moveNodeData = ref(null)
+const moveTargets = ref([])
 const showOnboarding = ref(!localStorage.getItem('qb_onboarding_seen'))
 function closeOnboarding() {
   showOnboarding.value = false
@@ -134,6 +138,15 @@ const selectedNodeType = computed(() => selectedNode.value?.type ?? null)
 
 const baselineVariantId = computed(() => qb.variantList.value[0]?.id)
 const isMainVariant = computed(() => qb.currentVariant.value === baselineVariantId.value)
+
+const READONLY_IDS_KEY = 'qb_readonly_variant_ids'
+const readonlyVariantIds = ref(JSON.parse(localStorage.getItem(READONLY_IDS_KEY) ?? '[]'))
+watch(readonlyVariantIds, (ids) => {
+  localStorage.setItem(READONLY_IDS_KEY, JSON.stringify(ids))
+})
+const isReadonly = computed(() =>
+  isMainVariant.value || readonlyVariantIds.value.includes(qb.currentVariant.value)
+)
 
 const variantPoints = ref({})
 watch(
@@ -343,7 +356,18 @@ function handleDelete(id) {
 
 function handleUpdate({ id, field, value }) {
   const node = qb.findInVariant(id)
-  if (node) node[field] = value
+  if (!node) return
+  if (field === 'label' && node.type === 'question') {
+    const oldLabel = node.label
+    node.label = value
+    for (const child of node.children ?? []) {
+      if (child.type === 'subquestion' && child.subheading === oldLabel) {
+        child.subheading = value
+      }
+    }
+  } else {
+    node[field] = value
+  }
 }
 
 function handleAddChild({ type, parentId }) {
@@ -367,17 +391,49 @@ function handleAddRoot(type) {
   }
 }
 
+function collectNodesOfType(list, type) {
+  const result = []
+  for (const n of list) {
+    if (n.type === type) result.push({ id: n.id, label: n.label, type: n.type })
+    if (n.children) result.push(...collectNodesOfType(n.children, type))
+    if (n.branches) {
+      for (const b of n.branches) {
+        if (b.children) result.push(...collectNodesOfType(b.children, type))
+      }
+    }
+  }
+  return result
+}
+
+function handleMoveRequest(nodeId) {
+  const node = qb.findInVariant(nodeId)
+  if (!node) return
+  const parent = qb.findParentInVariant(nodeId)
+  const targetType = node.type === 'question' ? 'section' : 'question'
+  const all = collectNodesOfType(qb.nodes.value, targetType)
+  moveTargets.value = all.filter(t => t.id !== parent?.id)
+  moveNodeData.value = node
+  showMove.value = true
+}
+
+function handleMove({ nodeId, targetParentId }) {
+  qb.moveNode(nodeId, targetParentId)
+  showMove.value = false
+  showToast('Verschoben')
+}
+
 async function handleDeleteVariant(id) {
   const wasLinked = autosave.isLinked(id)
   if (!qb.deleteVariant(id)) return
   gamification.purgeVariantRatings(id)
   autosave.purgeLinked(id)
   if (wasLinked) autosave.deleteFromServer(id)
+  readonlyVariantIds.value = readonlyVariantIds.value.filter(v => v !== id)
   showToast('Variante gelöscht')
 }
 
 function handleRate({ nodeId, type, value }) {
-  if (isMainVariant.value) return
+  if (isReadonly.value) return
   gamification.setRating(qb.currentVariant.value, nodeId, type, value)
 }
 
@@ -477,12 +533,18 @@ watch(
       const exportData = JSON.stringify({
         exportedAt: new Date().toISOString(),
         variants: { [id]: qb.variants[id] },
-        ratings: gamification.ratings[id] ?? {}
+        ratings: gamification.ratings[id] ?? {},
+        likes: loadAnalysisLikes(),
+        round: 1,
       }, null, 2)
       try { await autosave.saveToServer(id, exportData) } catch (_) {}
     }, 3000)
   }
 )
+
+function loadAnalysisLikes() {
+  try { return JSON.parse(localStorage.getItem('qb_analysis_likes') ?? '{}') } catch { return {} }
+}
 
 async function saveVariantToServer() {
   const variantId = qb.currentVariant.value
@@ -496,7 +558,9 @@ async function saveVariantToServer() {
   const singleExport = JSON.stringify({
     exportedAt: new Date().toISOString(),
     variants: { [variantId]: qb.variants[variantId] },
-    ratings: gamification.ratings[variantId] ?? {}
+    ratings: gamification.ratings[variantId] ?? {},
+    likes: loadAnalysisLikes(),
+    round: 1,
   }, null, 2)
 
   try {
@@ -555,6 +619,38 @@ async function loadOriginalFromServer() {
   }
 }
 
+async function loadForeignVariantReadonly() {
+  const serverVariants = await autosave.fetchServerVariants()
+  const available = serverVariants.filter(v => !qb.variants[v] || readonlyVariantIds.value.includes(v))
+  if (available.length === 0) { showToast('Keine fremden Fragebögen verfügbar'); return }
+  const name = prompt('Fragebogen auswählen (nur lesen):\n\n' + available.join('\n'))
+  if (!name?.trim()) return
+  const trimmed = name.trim()
+  if (qb.variants[trimmed] && !readonlyVariantIds.value.includes(trimmed)) {
+    showToast(`"${trimmed}" ist bereits als eigene Variante geladen`)
+    return
+  }
+  try {
+    const res = await fetch(`${uploadServer}/php/get_variant.php?name=${encodeURIComponent(trimmed)}`)
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    const raw = await res.text()
+    qb.importJSON(raw, trimmed)
+    if (!readonlyVariantIds.value.includes(trimmed)) {
+      readonlyVariantIds.value = [...readonlyVariantIds.value, trimmed]
+    }
+    qb.switchVariant(trimmed)
+    showToast(`"${trimmed}" schreibgeschützt geladen`)
+  } catch (err) {
+    showToast('Fehler: ' + err.message)
+  }
+}
+
+function removeReadonlyVariant(id) {
+  if (!qb.deleteVariant(id)) return
+  readonlyVariantIds.value = readonlyVariantIds.value.filter(v => v !== id)
+  showToast(`"${id}" entfernt`)
+}
+
 async function loadAllVariantsFromServer() {
   try {
     const serverVariants = await autosave.fetchServerVariants()
@@ -581,11 +677,14 @@ async function loadAllVariantsFromServer() {
 // Analysis-only variants: loaded from server but NOT added to qb.variants
 // so they don't appear in the editor's variant panel
 const analysisOnlyVariants = ref({})
+// Delphi: likes collected from all server-loaded expert variants
+const expertLikes = ref([])
 
 async function loadAllVariantsForAnalysis() {
   try {
     const serverVariants = await autosave.fetchServerVariants()
     const updates = {}
+    const likesUpdates = []
     for (const name of serverVariants) {
       if (qb.variants[name]) continue // own variant – already in qb.variants
       try {
@@ -595,16 +694,41 @@ async function loadAllVariantsForAnalysis() {
         const parsed = JSON.parse(raw)
         const srcKey = Object.keys(parsed.variants ?? {})[0] ?? name
         const data = parsed.variants?.[srcKey]
-        if (data) updates[name] = { id: name, label: data.label ?? name, nodes: data.nodes ?? [] }
+        if (data) {
+          updates[name] = { id: name, label: data.label ?? name, nodes: data.nodes ?? [] }
+          if (parsed.ratings) gamification.restoreVariantRatings(name, parsed.ratings)
+          if (parsed.likes && Object.keys(parsed.likes).length > 0) {
+            likesUpdates.push({ expertId: name, likes: parsed.likes })
+          }
+        }
       } catch (_) {}
     }
     analysisOnlyVariants.value = updates
+    expertLikes.value = likesUpdates
   } catch (err) {
     showToast('Fehler beim Laden: ' + err.message)
   }
 }
 
-const analysisVariants = computed(() => ({ ...qb.variants, ...analysisOnlyVariants.value }))
+function handleCreateConsensusVariant({ nodes, label }) {
+  const trimmed = label.trim()
+  if (!qb.addVariant(trimmed)) {
+    showToast('Konsens-Variante konnte nicht erstellt werden (Name vergeben?)')
+    return
+  }
+  qb.variants[trimmed].nodes = nodes
+  qb.switchVariant(trimmed)
+  showToast(`Konsens-Variante "${trimmed}" erstellt`)
+}
+
+const analysisVariants = computed(() => {
+  const combined = { ...qb.variants, ...analysisOnlyVariants.value }
+  const result = {}
+  for (const [id, v] of Object.entries(combined)) {
+    result[id] = { ...v, ratings: gamification.ratings[id] ?? {} }
+  }
+  return result
+})
 
 function doExport() {
   const json = qb.exportJSON()
@@ -623,7 +747,7 @@ function doExport() {
     <header class="app-header">
       <h1>✦ Fragebogen-Editor</h1>
       <div class="btn-group" style="margin-left:12px">
-        <button class="btn btn-sm" :disabled="isMainVariant" @click="handleAddRoot('section')">+ Abschnitt</button>
+        <button class="btn btn-sm" :disabled="isReadonly" @click="handleAddRoot('section')">+ Abschnitt</button>
       </div>
       <div class="btn-group" style="margin-left:4px">
         <button data-tour="undo-btn" class="btn btn-sm" :disabled="!canUndo" @click="doUndo" title="Rückgängig (Strg+Z)">↩</button>
@@ -631,7 +755,6 @@ function doExport() {
       </div>
       <div class="header-sep"></div>
       <div class="btn-group header-actions-desktop">
-        <button class="btn btn-sm" @click="showMerge = true">⇄ Zusammenführen</button>
         <button class="btn btn-sm" @click="showImport = true">↑ Import</button>
         <button class="btn btn-sm btn-primary" @click="doExport">↓ JSON Export</button>
       </div>
@@ -677,7 +800,9 @@ function doExport() {
       :variants="analysisVariants"
       :baseline-id="baselineVariantId"
       :load-all-from-server="loadAllVariantsForAnalysis"
+      :expert-likes="expertLikes"
       style="flex:1;overflow:hidden"
+      @create-consensus-variant="handleCreateConsensusVariant"
     />
 
     <!-- Main workspace -->
@@ -696,7 +821,7 @@ function doExport() {
             v-model="qb.variants[qb.currentVariant.value].nodes"
             handle=".drag-handle"
             :animation="150"
-            :disabled="isMainVariant"
+            :disabled="isReadonly"
           >
             <TreeNode
               v-for="element in qb.variants[qb.currentVariant.value].nodes"
@@ -704,8 +829,8 @@ function doExport() {
               :node="element"
               :selected-id="selectedId"
               :rated-ids="ratedNodeIds"
-              :show-ratings="!isMainVariant"
-              :readonly="isMainVariant"
+              :show-ratings="!isReadonly"
+              :readonly="isReadonly"
               @select="selectNode"
               @delete="handleDelete"
               @add-child="handleAddChild"
@@ -755,10 +880,11 @@ function doExport() {
           <template v-if="activeTab === 'editor'">
             <NodeEditor
               :node="selectedNode"
-              :readonly="isMainVariant"
+              :readonly="isReadonly"
               @update="handleUpdate"
               @delete="handleDelete"
               @add-child="handleAddChild"
+              @move="handleMoveRequest"
             />
           </template>
 
@@ -771,7 +897,7 @@ function doExport() {
                 :nodes="qb.nodes.value"
                 :selected-id="selectedId"
                 :variant-id="qb.currentVariant.value"
-                :is-main-variant="isMainVariant"
+                :is-main-variant="isReadonly"
                 :ratings="gamification.ratings"
                 @rate="handleRate"
               />
@@ -797,13 +923,15 @@ function doExport() {
                   aria-hidden="true"
                   :style="jsonStripeStyle"
                 ></div>
-                <!-- Editierbare Textarea -->
+                <!-- Editierbare Textarea (gesperrt bei fremden/schreibgeschützten Varianten) -->
                 <textarea
                   ref="jsonTextareaRef"
                   data-testid="json-editor"
                   class="json-editor-textarea"
                   v-model="jsonEditContent"
-                  @input="handleJsonInput"
+                  :readonly="isReadonly"
+                  :style="isReadonly ? 'background:var(--bg2,#f5f5f5);cursor:default' : ''"
+                  @input="isReadonly ? undefined : handleJsonInput()"
                   @keydown="handleJsonKeyDown"
                   @scroll="syncJsonScroll"
                   spellcheck="false"
@@ -844,7 +972,10 @@ function doExport() {
             </template>
             <template v-else>
               <span class="ti-label">{{ v.label }}</span>
-              <span v-if="v.id !== baselineVariantId" data-testid="variant-points" data-tour="variant-points" class="variant-points-badge">
+              <span v-if="readonlyVariantIds.includes(v.id)"
+                title="Schreibgeschützt – fremder Fragebogen"
+                style="font-size:11px;color:var(--text3);margin-left:2px">🔒</span>
+              <span v-else-if="v.id !== baselineVariantId" data-testid="variant-points" data-tour="variant-points" class="variant-points-badge">
                 {{ variantPoints[v.id] ?? 0 }} Pkt
               </span>
               <span v-if="autosave.isLinked(v.id)"
@@ -854,7 +985,7 @@ function doExport() {
               </span>
               <span style="font-size:10px;color:var(--text3)">{{ v.nodes?.length ?? 0 }} root</span>
               <button
-                v-if="v.id !== baselineVariantId"
+                v-if="v.id !== baselineVariantId && !readonlyVariantIds.includes(v.id)"
                 class="btn btn-sm"
                 data-testid="rename-variant"
                 style="padding:1px 6px;font-size:11px"
@@ -863,7 +994,14 @@ function doExport() {
               >✎</button>
             </template>
             <button
-              v-if="qb.variantList.value.length > 1"
+              v-if="qb.variantList.value.length > 1 && readonlyVariantIds.includes(v.id)"
+              class="btn btn-sm"
+              style="margin-left:auto;padding:1px 6px;font-size:11px;color:var(--text3)"
+              @click.stop="removeReadonlyVariant(v.id)"
+              title="Aus der lokalen Liste entfernen (Server unberührt)"
+            >✕</button>
+            <button
+              v-else-if="qb.variantList.value.length > 1 && !readonlyVariantIds.includes(v.id)"
               class="btn btn-sm"
               data-testid="delete-variant"
               style="margin-left:auto;padding:1px 6px;font-size:11px;color:var(--danger,#b91c1c)"
@@ -880,6 +1018,7 @@ function doExport() {
             </button>
             <button class="btn btn-sm" @click="loadVariantFromServer">↓ Variante laden</button>
             <button class="btn btn-sm" @click="loadOriginalFromServer">↓ Original laden</button>
+            <button class="btn btn-sm" @click="loadForeignVariantReadonly" title="Fragebogen eines anderen Users schreibgeschützt öffnen">👁 Fremden ansehen</button>
           </div>
         </div>
         <div class="panel-footer">
@@ -906,7 +1045,11 @@ function doExport() {
 
     <!-- Status bar -->
     <div class="statusbar">
-      <span>Variante: <strong>{{ qb.variants[qb.currentVariant.value]?.label }}</strong> · {{ qb.variantList.value.length }} Variante(n) insgesamt</span>
+      <span>
+        Variante: <strong>{{ qb.variants[qb.currentVariant.value]?.label }}</strong>
+        <span v-if="readonlyVariantIds.includes(qb.currentVariant.value)" style="margin-left:6px;color:var(--text3)">🔒 Nur lesen</span>
+        · {{ qb.variantList.value.length }} Variante(n) insgesamt
+      </span>
       <span>
         {{ autosaveStatus.status === 'saved' ? '✓ Server-Sync' :
            autosaveStatus.status === 'saving' ? '⏳ Speichert…' :
@@ -922,6 +1065,13 @@ function doExport() {
       :variants="qb.variants"
       @close="showMerge = false"
       @merge="handleMerge"
+    />
+    <MoveModal
+      v-if="showMove && moveNodeData"
+      :node="moveNodeData"
+      :targets="moveTargets"
+      @close="showMove = false"
+      @move="handleMove"
     />
     <ImportModal
       v-if="showImport"

@@ -1,14 +1,23 @@
 <script setup>
-import { ref, computed, watch, toRef } from 'vue'
+import { ref, computed, watch, toRef, onMounted, onUnmounted } from 'vue'
 import { useAnalysis } from '../composables/useAnalysis.js'
+import { useVotingAnalysis } from '../composables/useVotingAnalysis.js'
+import { useLikes } from '../composables/useLikes.js'
+import { aggregateLikes, createConsensusNodes } from '../composables/useLikeAggregation.js'
 import SunburstChart from './SunburstChart.vue'
+import VotingScatterChart from './VotingScatterChart.vue'
 import IconDisplay from './IconDisplay.vue'
 
 const props = defineProps({
   variants: { type: Object, required: true },
   baselineId: { type: String, required: true },
   loadAllFromServer: { type: Function, default: null },
+  // Array of { expertId, likes } from all loaded server variants
+  expertLikes: { type: Array, default: () => [] },
+  createVariant: { type: Function, default: null },
 })
+
+const emit = defineEmits(['create-consensus-variant'])
 
 // User-selectable baseline (defaults to prop, but can be overridden)
 const allVariantIds = computed(() => Object.keys(props.variants))
@@ -30,6 +39,16 @@ watch(allVariantIds, () => {
 const baselineIdRef = computed(() => localBaselineId.value)
 const variantsRef = toRef(props, 'variants')
 const { variantIds, computeHeatmap } = useAnalysis(variantsRef, baselineIdRef)
+const { ratedNodes, votingMap, summary: votingSummary } = useVotingAnalysis(variantsRef, baselineIdRef)
+
+// Mode: 'changes' | 'votings'
+const mode = ref('changes')
+// Voting sub-view: 'scatter' | 'sunburst'
+const votingSubView = ref('scatter')
+// Sunburst color dimension when in voting/sunburst sub-view
+const sunburstColorMode = ref('importance')
+// Selected node in voting scatter
+const selectedVotingId = ref(null)
 
 // Variant selection
 const selectedVariants = ref([])
@@ -76,6 +95,10 @@ function onSelectNode({ nodeId, questionId, sectionId }) {
   selectedSectionId.value = sectionId
   selectedQuestionId.value = questionId
   selectedNodeId.value = nodeId
+  if (isRunThrough.value) {
+    const i = runThroughItems.value.findIndex(it => it.nodeId === nodeId)
+    if (i >= 0) runThroughIndex.value = i
+  }
 }
 
 // Detail panel data
@@ -91,27 +114,60 @@ const detailNode = computed(() =>
   detailQuestion.value?.children.find(c => c.id === selectedNodeId.value) ?? null
 )
 
-// Like functionality (persisted in localStorage)
-const LIKES_KEY = 'qb_analysis_likes'
-function loadLikes() {
-  try { return JSON.parse(localStorage.getItem(LIKES_KEY) ?? '{}') } catch { return {} }
+// Moderator mode (persisted in localStorage)
+const isModerator = ref(localStorage.getItem('qb_is_moderator') === '1')
+function toggleModerator() {
+  isModerator.value = !isModerator.value
+  localStorage.setItem('qb_is_moderator', isModerator.value ? '1' : '0')
 }
-const likes = ref(loadLikes())
+
+// Like functionality (persisted in localStorage)
+const likesMgr = useLikes('qb_analysis_likes')
+
+const activeNodeId = computed(() =>
+  selectedNodeId.value ?? selectedQuestionId.value ?? selectedSectionId.value
+)
 
 function toggleLike(variantId) {
-  const key = `${selectedNodeId.value ?? selectedQuestionId.value ?? selectedSectionId.value}__${variantId}`
-  if (likes.value[key]) {
-    delete likes.value[key]
-  } else {
-    likes.value[key] = true
-  }
-  likes.value = { ...likes.value }
-  try { localStorage.setItem(LIKES_KEY, JSON.stringify(likes.value)) } catch {}
+  likesMgr.toggleLike(activeNodeId.value, variantId)
 }
 
 function isLiked(variantId) {
-  const key = `${selectedNodeId.value ?? selectedQuestionId.value ?? selectedSectionId.value}__${variantId}`
-  return !!likes.value[key]
+  return likesMgr.isLiked(activeNodeId.value, variantId)
+}
+
+// Delphi: aggregate likes from all experts (own + server-loaded)
+const allExpertLikes = computed(() => {
+  const ownLikes = likesMgr.forExport()
+  const own = Object.keys(ownLikes).length > 0
+    ? [{ expertId: '__own__', likes: ownLikes }]
+    : []
+  return [...own, ...props.expertLikes]
+})
+
+const aggregatedLikes = computed(() => aggregateLikes(allExpertLikes.value))
+
+const likesCount = computed(() => Object.keys(likesMgr.likes.value).length)
+
+const totalExpertCount = computed(() => {
+  const ids = new Set(allExpertLikes.value.map(e => e.expertId))
+  return ids.size
+})
+
+function likeCountForVariant(nodeId, variantId) {
+  return aggregatedLikes.value[nodeId]?.[variantId] ?? 0
+}
+
+function consensusForNode(nodeId) {
+  return aggregatedLikes.value[nodeId] ?? null
+}
+
+function handleCreateConsensusVariant() {
+  const baseline = props.variants[localBaselineId.value]
+  if (!baseline) return
+  const newNodes = createConsensusNodes(baseline.nodes ?? [], aggregatedLikes.value, props.variants)
+  const dateStr = new Date().toLocaleDateString('de-DE')
+  emit('create-consensus-variant', { nodes: newNodes, label: `Konsens (${dateStr})` })
 }
 
 // Variant node content for detail panel
@@ -182,6 +238,95 @@ const legend = [
   { label: 'Viel', color: '#fb923c' },
   { label: 'Stark', color: '#ef4444' },
 ]
+
+const votingLegend = [
+  { label: '1', color: '#ef4444' },
+  { label: '2', color: '#fb923c' },
+  { label: '3', color: '#fde68a' },
+  { label: '4', color: '#86efac' },
+  { label: '5', color: '#4ade80' },
+]
+
+const selectedVotingNode = computed(() =>
+  ratedNodes.value.find(n => n.id === selectedVotingId.value) ?? null
+)
+
+// Voting data for the currently selected node/question in the shared detail panel
+const currentVotingData = computed(() => {
+  const id = selectedNodeId.value ?? selectedQuestionId.value
+  if (!id) return null
+  return ratedNodes.value.find(n => n.id === id) ?? null
+})
+
+const QUADRANT_META = {
+  core:    { label: 'Kernthema',          color: '#dcfce7', textColor: '#15803d', hint: 'Beibehalten und weiter optimieren' },
+  unclear: { label: 'Optimierungsbedarf', color: '#fef3c7', textColor: '#92400e', hint: 'Wichtig, aber unklar → Formulierung verbessern' },
+  nice:    { label: 'Nice-to-have',       color: '#eff6ff', textColor: '#1d4ed8', hint: 'Weniger wichtig → Kürzen erwägen' },
+  rethink: { label: 'Überdenken',         color: '#fee2e2', textColor: '#b91c1c', hint: 'Unwichtig und unklar → Streichen oder grundlegend überarbeiten' },
+}
+
+// ── Run-Through ──────────────────────────────────────────────────────────────
+// Flat list of all leaf items (outermost sunburst ring) in questionnaire order
+const runThroughItems = computed(() => {
+  const result = []
+  for (const section of heatmap.value) {
+    for (const question of section.children ?? []) {
+      for (const item of question.children ?? []) {
+        result.push({ nodeId: item.id, questionId: question.id, sectionId: section.id })
+      }
+    }
+  }
+  return result
+})
+
+const isRunThrough = ref(false)
+const runThroughIndex = ref(0)
+
+function applyRunThroughItem() {
+  const item = runThroughItems.value[runThroughIndex.value]
+  if (!item) return
+  zoomedSectionId.value = item.sectionId
+  selectedSectionId.value = item.sectionId
+  selectedQuestionId.value = item.questionId
+  selectedNodeId.value = item.nodeId
+}
+
+function startRunThrough() {
+  const startIdx = selectedNodeId.value
+    ? Math.max(0, runThroughItems.value.findIndex(it => it.nodeId === selectedNodeId.value))
+    : 0
+  runThroughIndex.value = startIdx
+  isRunThrough.value = true
+  applyRunThroughItem()
+}
+
+function stopRunThrough() {
+  isRunThrough.value = false
+}
+
+function rtNext() {
+  if (runThroughIndex.value < runThroughItems.value.length - 1) {
+    runThroughIndex.value++
+    applyRunThroughItem()
+  }
+}
+
+function rtPrev() {
+  if (runThroughIndex.value > 0) {
+    runThroughIndex.value--
+    applyRunThroughItem()
+  }
+}
+
+function handleRunThroughKey(e) {
+  if (!isRunThrough.value) return
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); rtNext() }
+  else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); rtPrev() }
+  else if (e.key === 'Escape') { stopRunThrough() }
+}
+
+onMounted(() => document.addEventListener('keydown', handleRunThroughKey))
+onUnmounted(() => document.removeEventListener('keydown', handleRunThroughKey))
 </script>
 
 <template>
@@ -189,6 +334,21 @@ const legend = [
     <!-- Toolbar -->
     <div class="analysis-toolbar">
       <span class="analysis-toolbar-title">Analyse</span>
+
+      <!-- Mode toggle -->
+      <div class="analysis-mode-toggle">
+        <button
+          class="analysis-mode-btn"
+          :class="{ 'analysis-mode-btn--active': mode === 'changes' }"
+          @click="mode = 'changes'"
+        >Änderungen</button>
+        <button
+          class="analysis-mode-btn"
+          :class="{ 'analysis-mode-btn--active': mode === 'votings' }"
+          @click="mode = 'votings'"
+        >Votings</button>
+      </div>
+
       <span class="analysis-toolbar-sep"></span>
 
       <!-- Baseline selector -->
@@ -227,17 +387,99 @@ const legend = [
       >{{ isReloading ? '⏳ Lädt…' : '↺ Vom Server laden' }}</button>
 
       <span class="analysis-toolbar-sep"></span>
-      <!-- Legend -->
-      <div class="analysis-legend">
-        <span
-          v-for="l in legend"
-          :key="l.label"
-          class="analysis-legend-item"
-        >
-          <span class="analysis-legend-swatch" :style="{ background: l.color }"></span>
-          {{ l.label }}
-        </span>
-      </div>
+
+      <!-- Voting sub-view toggle -->
+      <template v-if="mode === 'votings'">
+        <div class="analysis-mode-toggle" style="margin-right:8px">
+          <button
+            class="analysis-mode-btn"
+            :class="{ 'analysis-mode-btn--active': votingSubView === 'scatter' }"
+            @click="votingSubView = 'scatter'"
+          >Scatter</button>
+          <button
+            class="analysis-mode-btn"
+            :class="{ 'analysis-mode-btn--active': votingSubView === 'sunburst' }"
+            @click="votingSubView = 'sunburst'"
+          >Sunburst</button>
+        </div>
+        <!-- Sunburst color dimension -->
+        <template v-if="votingSubView === 'sunburst'">
+          <select
+            v-model="sunburstColorMode"
+            style="font-size:11px;padding:2px 6px;border:1px solid var(--border);border-radius:4px;background:var(--bg);margin-right:8px"
+          >
+            <option value="importance">Wichtigkeit</option>
+            <option value="understandability">Verständlichkeit</option>
+          </select>
+        </template>
+        <!-- Voting legend -->
+        <div class="analysis-legend">
+          <span style="font-size:11px;color:var(--text3)">Rating:</span>
+          <span v-for="l in votingLegend" :key="l.label" class="analysis-legend-item">
+            <span class="analysis-legend-swatch" :style="{ background: l.color }"></span>
+            {{ l.label }}
+          </span>
+          <span class="analysis-legend-item" style="margin-left:4px">
+            <span class="analysis-legend-swatch" style="background:#e2e8f0"></span>
+            kein Rating
+          </span>
+          <span v-if="votingSummary" style="font-size:11px;color:var(--text3);margin-left:8px">
+            {{ votingSummary.totalRated }} Items bewertet
+          </span>
+        </div>
+      </template>
+
+      <!-- Changes legend -->
+      <template v-else>
+        <div class="analysis-legend">
+          <span
+            v-for="l in legend"
+            :key="l.label"
+            class="analysis-legend-item"
+          >
+            <span class="analysis-legend-swatch" :style="{ background: l.color }"></span>
+            {{ l.label }}
+          </span>
+        </div>
+      </template>
+
+      <!-- Moderator toggle -->
+      <button
+        class="btn btn-sm"
+        :class="{ 'moderator-btn--active': isModerator }"
+        :title="isModerator ? 'Moderator-Modus aktiv – klicken zum Deaktivieren' : 'Moderator-Modus aktivieren'"
+        @click="toggleModerator"
+      >{{ isModerator ? '👑 Moderator' : '○ Moderator' }}</button>
+
+      <!-- Likes badge -->
+      <span v-if="likesCount > 0" class="likes-count-badge" title="Anzahl deiner Likes">♥ {{ likesCount }}</span>
+
+      <!-- Moderator-only actions -->
+      <template v-if="isModerator">
+        <button
+          v-if="Object.keys(aggregatedLikes).length > 0"
+          class="btn btn-sm btn-primary"
+          title="Konsens-Variante aus Mehrheits-Likes aller Experten erstellen"
+          @click="handleCreateConsensusVariant"
+        >Konsens-Variante erstellen</button>
+        <button
+          v-if="likesCount > 0"
+          class="btn btn-sm"
+          style="color:var(--danger,#b91c1c)"
+          title="Eigene Likes zurücksetzen"
+          @click="likesMgr.clear()"
+        >Likes löschen</button>
+      </template>
+
+      <!-- Run-Through: only when sunburst is active and items exist -->
+      <template v-if="!(mode === 'votings' && votingSubView === 'scatter') && runThroughItems.length > 0">
+        <button
+          class="btn btn-sm"
+          :class="{ 'rt-btn-active': isRunThrough }"
+          :title="isRunThrough ? 'Run-Through beenden (Esc)' : selectedNodeId ? 'Run-Through ab diesem Item starten' : 'Alle Items der Reihe nach durchlaufen (← →)'"
+          @click="isRunThrough ? stopRunThrough() : startRunThrough()"
+        >{{ isRunThrough ? '⏹ Stopp' : '▶ Run-Through' }}</button>
+      </template>
     </div>
 
     <!-- Empty state -->
@@ -250,7 +492,159 @@ const legend = [
       <div>Der Fragebogen hat noch keine Abschnitte.</div>
     </div>
 
-    <!-- Main layout: chart + detail -->
+    <!-- ── VOTING SCATTER ──────────────────────────────────────────────────── -->
+    <div v-else-if="mode === 'votings' && votingSubView === 'scatter'" class="analysis-body">
+      <!-- Left: Scatter chart -->
+      <div class="analysis-chart-panel">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:8px;text-align:center">
+          Klick auf einen <b>Punkt</b> → Details rechts
+        </div>
+        <div class="analysis-chart-wrap">
+          <VotingScatterChart
+            :nodes="ratedNodes"
+            :selected-id="selectedVotingId"
+            @select="selectedVotingId = $event"
+          />
+        </div>
+        <!-- Quadrant summary pills -->
+        <div v-if="votingSummary" class="analysis-section-list" style="margin-top:8px">
+          <div
+            v-for="(count, q) in votingSummary.byQuadrant"
+            :key="q"
+            class="analysis-section-pill"
+            :style="{ background: QUADRANT_META[q].color, borderColor: QUADRANT_META[q].textColor + '55', color: QUADRANT_META[q].textColor }"
+          >
+            {{ QUADRANT_META[q].label }}
+            <span class="analysis-section-badge" :style="{ background: QUADRANT_META[q].textColor + '22' }">{{ count }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Scatter detail -->
+      <div class="analysis-detail-panel">
+        <!-- Summary (no selection) -->
+        <template v-if="!selectedVotingNode">
+          <div v-if="!votingSummary" class="analysis-detail-empty">
+            Noch keine Bewertungen vorhanden.<br>
+            <span style="font-size:11px;margin-top:6px;display:block">Varianten müssen Wichtigkeit- und Verständlichkeit-Ratings enthalten.</span>
+          </div>
+          <template v-else>
+            <div class="analysis-detail-header">
+              <div>
+                <span class="analysis-detail-title">Voting-Übersicht</span>
+                <span class="analysis-detail-sub">{{ votingSummary.totalRated }} bewertete Items aus {{ selectedVariants.length }} Variante(n)</span>
+              </div>
+            </div>
+            <div class="voting-summary-grid">
+              <div class="voting-summary-card">
+                <div class="voting-summary-num">{{ votingSummary.avgImportance?.toFixed(1) ?? '–' }}</div>
+                <div class="voting-summary-label">Ø Wichtigkeit</div>
+              </div>
+              <div class="voting-summary-card">
+                <div class="voting-summary-num">{{ votingSummary.avgUnderstandability?.toFixed(1) ?? '–' }}</div>
+                <div class="voting-summary-label">Ø Verständlichkeit</div>
+              </div>
+            </div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:6px;margin-top:4px">Quadranten-Verteilung</div>
+            <div style="display:flex;flex-direction:column;gap:4px">
+              <div
+                v-for="(count, q) in votingSummary.byQuadrant"
+                :key="q"
+                class="voting-quadrant-row"
+                :style="{ background: QUADRANT_META[q].color, borderColor: QUADRANT_META[q].textColor + '44' }"
+              >
+                <span :style="{ color: QUADRANT_META[q].textColor, fontWeight: 600, fontSize: '12px' }">{{ QUADRANT_META[q].label }}</span>
+                <span style="flex:1;font-size:11px;color:var(--text3);margin-left:8px">{{ QUADRANT_META[q].hint }}</span>
+                <span class="analysis-section-badge">{{ count }}</span>
+              </div>
+            </div>
+          </template>
+        </template>
+
+        <!-- Node detail (scatter selection) -->
+        <template v-else>
+          <div class="analysis-detail-header">
+            <button class="btn btn-sm" style="margin-right:8px" @click="selectedVotingId = null">← Zurück</button>
+            <div>
+              <span class="analysis-detail-title">{{ selectedVotingNode.label }}</span>
+              <span class="analysis-detail-sub">
+                {{ selectedVotingNode.type }} ·
+                <span v-if="selectedVotingNode.sectionLabel">{{ selectedVotingNode.sectionLabel }} · </span>
+                {{ selectedVotingNode.nRatings }} Bewertung(en)
+              </span>
+            </div>
+          </div>
+
+          <!-- Quadrant badge -->
+          <div
+            v-if="selectedVotingNode.quadrant"
+            class="voting-quadrant-badge"
+            :style="{
+              background: QUADRANT_META[selectedVotingNode.quadrant].color,
+              color: QUADRANT_META[selectedVotingNode.quadrant].textColor,
+              borderColor: QUADRANT_META[selectedVotingNode.quadrant].textColor + '55',
+            }"
+          >
+            <span style="font-weight:700">{{ QUADRANT_META[selectedVotingNode.quadrant].label }}</span>
+            <span style="font-size:11px;margin-left:8px">{{ QUADRANT_META[selectedVotingNode.quadrant].hint }}</span>
+          </div>
+
+          <!-- Average bars -->
+          <div v-if="selectedVotingNode.avgImportance !== null" class="voting-avg-row">
+            <span class="voting-avg-label">Ø Wichtigkeit</span>
+            <div class="voting-bar-wrap">
+              <div
+                class="voting-bar-fill voting-bar--importance"
+                :style="{ width: ((selectedVotingNode.avgImportance - 1) / 4 * 100) + '%' }"
+              >{{ selectedVotingNode.avgImportance?.toFixed(1) }}</div>
+            </div>
+          </div>
+          <div v-if="selectedVotingNode.avgUnderstandability !== null" class="voting-avg-row">
+            <span class="voting-avg-label">Ø Verständlichkeit</span>
+            <div class="voting-bar-wrap">
+              <div
+                class="voting-bar-fill voting-bar--understand"
+                :style="{ width: ((selectedVotingNode.avgUnderstandability - 1) / 4 * 100) + '%' }"
+              >{{ selectedVotingNode.avgUnderstandability?.toFixed(1) }}</div>
+            </div>
+          </div>
+
+          <!-- Histograms -->
+          <div v-if="selectedVotingNode.importanceDist?.some(c => c > 0)" class="voting-hist-section">
+            <div class="voting-hist-title">Verteilung Wichtigkeit (n={{ selectedVotingNode.importanceDist.reduce((a,b)=>a+b,0) }})</div>
+            <div class="voting-hist">
+              <div v-for="(count, i) in selectedVotingNode.importanceDist" :key="i" class="voting-hist-col">
+                <div class="voting-hist-bar-wrap">
+                  <div
+                    class="voting-hist-bar voting-hist-bar--importance"
+                    :style="{ height: (count / Math.max(...selectedVotingNode.importanceDist) * 100) + '%' }"
+                  ></div>
+                </div>
+                <div class="voting-hist-label">{{ i + 1 }}</div>
+                <div class="voting-hist-count">{{ count }}</div>
+              </div>
+            </div>
+          </div>
+          <div v-if="selectedVotingNode.understandDist?.some(c => c > 0)" class="voting-hist-section">
+            <div class="voting-hist-title">Verteilung Verständlichkeit (n={{ selectedVotingNode.understandDist.reduce((a,b)=>a+b,0) }})</div>
+            <div class="voting-hist">
+              <div v-for="(count, i) in selectedVotingNode.understandDist" :key="i" class="voting-hist-col">
+                <div class="voting-hist-bar-wrap">
+                  <div
+                    class="voting-hist-bar voting-hist-bar--understand"
+                    :style="{ height: (count / Math.max(...selectedVotingNode.understandDist) * 100) + '%' }"
+                  ></div>
+                </div>
+                <div class="voting-hist-label">{{ i + 1 }}</div>
+                <div class="voting-hist-count">{{ count }}</div>
+              </div>
+            </div>
+          </div>
+        </template>
+      </div>
+    </div>
+
+    <!-- ── CHANGES + VOTING SUNBURST (shared body) ────────────────────────── -->
     <div v-else class="analysis-body">
       <!-- Left: Chart -->
       <div class="analysis-chart-panel">
@@ -260,7 +654,8 @@ const legend = [
           <span class="analysis-zoom-label">{{ heatmap.find(s => s.id === zoomedSectionId)?.label }}</span>
         </div>
         <div v-else style="font-size:11px;color:var(--text3);margin-bottom:8px;text-align:center">
-          Klick auf <b>Abschnitt</b> (innen) → hineinzoomen · <b>Screeningfrage/Item</b> → Details
+          <template v-if="mode === 'votings'">Farbe = Ø {{ sunburstColorMode === 'importance' ? 'Wichtigkeit' : 'Verständlichkeit' }} · Klick zum Zoomen</template>
+          <template v-else>Klick auf <b>Abschnitt</b> (innen) → hineinzoomen · <b>Screeningfrage/Item</b> → Details</template>
         </div>
         <div class="analysis-chart-wrap">
           <SunburstChart
@@ -269,6 +664,8 @@ const legend = [
             :selected-question-id="selectedQuestionId"
             :selected-node-id="selectedNodeId"
             :zoomed-section-id="zoomedSectionId"
+            :color-mode="mode === 'votings' ? sunburstColorMode : 'changes'"
+            :voting-map="mode === 'votings' ? votingMap : {}"
             @select-section="onSelectSection"
             @select-question="onSelectQuestion"
             @select-node="onSelectNode"
@@ -284,6 +681,7 @@ const legend = [
             @click="onSelectSection(sec.id)"
           >
             {{ sec.label }}
+            <span v-if="sec.isAdded" class="analysis-new-badge">NEU</span>
             <span class="analysis-section-badge">{{ sec.changeCount }}</span>
           </div>
         </div>
@@ -291,8 +689,37 @@ const legend = [
 
       <!-- Right: Detail panel -->
       <div class="analysis-detail-panel">
+        <!-- Run-Through Navigator -->
+        <div v-if="isRunThrough" class="rt-nav">
+          <div class="rt-nav-top">
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="font-size:11px;font-weight:600;color:var(--primary,#2563eb)">▶ Run-Through</span>
+              <span class="rt-nav-count">{{ runThroughIndex + 1 }} / {{ runThroughItems.length }}</span>
+            </div>
+            <button class="btn btn-sm" style="font-size:11px" @click="stopRunThrough()">✕ Beenden</button>
+          </div>
+          <div class="rt-progress-track">
+            <div class="rt-progress-fill" :style="{ width: ((runThroughIndex + 1) / runThroughItems.length * 100) + '%' }"></div>
+          </div>
+          <div class="rt-nav-controls">
+            <button
+              class="btn btn-sm"
+              :disabled="runThroughIndex === 0"
+              :style="runThroughIndex === 0 ? { opacity: 0.4 } : {}"
+              @click="rtPrev()"
+            >← Zurück</button>
+            <button
+              class="btn btn-sm rt-next-btn"
+              :disabled="runThroughIndex >= runThroughItems.length - 1"
+              :style="runThroughIndex >= runThroughItems.length - 1 ? { opacity: 0.4 } : {}"
+              @click="rtNext()"
+            >Weiter →</button>
+          </div>
+          <div class="rt-kb-hint">← → navigieren · Esc beendet</div>
+        </div>
+
         <!-- No selection -->
-        <div v-if="!selectedSectionId" class="analysis-detail-empty">
+        <div v-if="!selectedSectionId && !isRunThrough" class="analysis-detail-empty">
           Wähle einen Abschnitt, eine Screeningfrage oder ein Item im Chart aus.
         </div>
 
@@ -300,7 +727,10 @@ const legend = [
         <template v-else-if="!selectedQuestionId">
           <div class="analysis-detail-header">
             <span class="analysis-detail-title">{{ detailSection?.label }}</span>
-            <span class="analysis-detail-sub">Abschnitt · {{ detailSection?.changeCount }} Änderungen</span>
+            <span class="analysis-detail-sub">
+              Abschnitt · {{ detailSection?.changeCount }} Änderungen
+              <template v-if="detailSection?.isAdded"> · Neu in: {{ detailSection.addedIn.map(id => props.variants[id]?.label ?? id).join(', ') }}</template>
+            </span>
           </div>
           <div class="analysis-node-list">
             <div
@@ -312,6 +742,7 @@ const legend = [
             >
               <span class="analysis-node-type-badge type-question">Screeningfrage</span>
               <span class="analysis-node-label">{{ q.label }}</span>
+              <span v-if="q.isAdded" class="analysis-new-badge">NEU</span>
               <span class="analysis-node-changes">{{ q.changeCount }} Änd.</span>
             </div>
             <div v-if="!detailSection?.children?.length" style="color:var(--text3);font-size:13px;padding:16px">
@@ -326,7 +757,10 @@ const legend = [
             <button class="btn btn-sm" style="margin-right:8px" @click="selectedQuestionId = null; selectedNodeId = null">← Zurück</button>
             <div>
               <span class="analysis-detail-title">{{ detailQuestion?.label }}</span>
-              <span class="analysis-detail-sub">Screeningfrage · {{ detailQuestion?.changeCount }} Änderungen insgesamt</span>
+              <span class="analysis-detail-sub">
+                Screeningfrage · {{ detailQuestion?.changeCount }} Änderungen insgesamt
+                <template v-if="detailQuestion?.isAdded"> · Neu in: {{ detailQuestion.addedIn.map(id => props.variants[id]?.label ?? id).join(', ') }}</template>
+              </span>
             </div>
           </div>
           <!-- Items under this question -->
@@ -340,7 +774,21 @@ const legend = [
             >
               <span class="analysis-node-type-badge" :class="`type-${item.type}`">{{ item.type }}</span>
               <span class="analysis-node-label">{{ item.label }}</span>
+              <span v-if="item.isAdded" class="analysis-new-badge">NEU</span>
               <span class="analysis-node-changes">{{ item.changeCount }}/{{ item.totalVariants }} Variante(n)</span>
+              <!-- Delphi consensus indicator -->
+              <span
+                v-if="consensusForNode(item.id)"
+                class="delphi-dot"
+                :class="{
+                  'delphi-dot--consensus': consensusForNode(item.id).majority,
+                  'delphi-dot--controversial': consensusForNode(item.id).isControversial,
+                  'delphi-dot--partial': !consensusForNode(item.id).majority && !consensusForNode(item.id).isControversial,
+                }"
+                :title="consensusForNode(item.id).majority
+                  ? `Konsens: ${Math.round(consensusForNode(item.id).consensusRatio * 100)}% bevorzugen ${props.variants[consensusForNode(item.id).majority]?.label ?? consensusForNode(item.id).majority}`
+                  : `Strittig: ${consensusForNode(item.id).total} Stimme(n), keine Einigkeit`"
+              ></span>
             </div>
             <div v-if="!detailQuestion?.children?.length" style="color:var(--text3);font-size:13px;padding:8px 0">
               Keine Unterfragen / ICF-Items vorhanden.
@@ -355,7 +803,9 @@ const legend = [
             <div>
               <span class="analysis-detail-title">{{ detailNode?.label }}</span>
               <span class="analysis-detail-sub">
-                {{ detailNode?.type }} · geändert in {{ detailNode?.changeCount }} von {{ detailNode?.totalVariants }} Variante(n)
+                {{ detailNode?.type }} ·
+                <template v-if="detailNode?.isAdded">neu in {{ detailNode.addedIn.length }} von {{ detailNode.totalVariants }} Variante(n)</template>
+                <template v-else>geändert in {{ detailNode?.changeCount }} von {{ detailNode?.totalVariants }} Variante(n)</template>
               </span>
             </div>
           </div>
@@ -366,7 +816,10 @@ const legend = [
               <span class="analysis-variant-name">{{ props.variants[localBaselineId]?.label ?? localBaselineId }}</span>
               <span class="analysis-baseline-badge">Original</span>
             </div>
-            <div class="analysis-node-full">
+            <div v-if="detailNode?.isAdded" style="font-size:12px;color:var(--text3);font-style:italic;padding:4px 0">
+              Nicht im Original vorhanden.
+            </div>
+            <div v-else class="analysis-node-full">
               <!-- Icon -->
               <div v-if="getBaselineNode(selectedNodeId)?.icon" class="analysis-node-icon-row">
                 <IconDisplay :icon="getBaselineNode(selectedNodeId).icon" :size="36" />
@@ -404,79 +857,192 @@ const legend = [
             </div>
           </div>
 
-          <!-- Each variant: nur geänderte Felder -->
+          <!-- Each variant -->
           <div
             v-for="vid in selectedVariants"
             :key="vid"
             class="analysis-variant-card"
-            :class="{ 'analysis-variant-card--changed': detailNode?.variantsChanged.includes(vid) }"
+            :class="{ 'analysis-variant-card--changed': detailNode?.isAdded ? detailNode.addedIn.includes(vid) : detailNode?.variantsChanged.includes(vid) }"
           >
             <div class="analysis-variant-card-header">
               <span class="analysis-variant-name">{{ props.variants[vid]?.label ?? vid }}</span>
-              <span v-if="detailNode?.variantsChanged.includes(vid)" class="analysis-changed-badge">geändert</span>
-              <span v-else class="analysis-unchanged-badge">unverändert</span>
-              <button
-                class="analysis-like-btn"
-                :class="{ 'analysis-like-btn--active': isLiked(vid) }"
-                @click="toggleLike(vid)"
-                title="Diese Variante für diesen Punkt liken"
-              >{{ isLiked(vid) ? '♥' : '♡' }}</button>
+              <!-- isAdded: zeige ob diese Variante den neuen Node enthält -->
+              <template v-if="detailNode?.isAdded">
+                <span v-if="detailNode.addedIn.includes(vid)" class="analysis-added-badge">neu hinzugefügt</span>
+                <span v-else class="analysis-unchanged-badge">nicht vorhanden</span>
+                <template v-if="detailNode.addedIn.includes(vid)">
+                  <span v-if="likeCountForVariant(selectedNodeId, vid) > 0" class="delphi-like-count">{{ likeCountForVariant(selectedNodeId, vid) }}/{{ totalExpertCount }}</span>
+                  <button
+                    class="analysis-like-btn"
+                    :class="{ 'analysis-like-btn--active': isLiked(vid) }"
+                    @click="toggleLike(vid)"
+                    :title="`${likeCountForVariant(selectedNodeId, vid)} von ${totalExpertCount} Experten bevorzugen diese Variante`"
+                  >{{ isLiked(vid) ? '♥' : '♡' }}</button>
+                </template>
+              </template>
+              <!-- Normal: geändert / unverändert + Like -->
+              <template v-else>
+                <span v-if="detailNode?.variantsChanged.includes(vid)" class="analysis-changed-badge">geändert</span>
+                <span v-else class="analysis-unchanged-badge">unverändert</span>
+                <span v-if="likeCountForVariant(selectedNodeId, vid) > 0" class="delphi-like-count">{{ likeCountForVariant(selectedNodeId, vid) }}/{{ totalExpertCount }}</span>
+                <button
+                  class="analysis-like-btn"
+                  :class="{ 'analysis-like-btn--active': isLiked(vid) }"
+                  @click="toggleLike(vid)"
+                  :title="`${likeCountForVariant(selectedNodeId, vid)} von ${totalExpertCount} Experten bevorzugen diese Variante`"
+                >{{ isLiked(vid) ? '♥' : '♡' }}</button>
+              </template>
             </div>
 
-            <!-- Unverändert: kurze Meldung -->
-            <div v-if="!detailNode?.variantsChanged.includes(vid)" style="font-size:12px;color:var(--text3);padding:2px 0">
-              Identisch mit dem Original.
-            </div>
-
-            <!-- Node fehlt ganz -->
-            <div v-else-if="!getVariantNode(vid)" style="font-size:12px;color:var(--text3);padding:2px 0">
-              Node in dieser Variante nicht vorhanden.
-            </div>
-
-            <!-- Nur die geänderten Felder anzeigen -->
-            <template v-else>
-              <div
-                v-for="key in changedFields(getBaselineNode(selectedNodeId), getVariantNode(vid))"
-                :key="key"
-                class="analysis-diff-row"
-              >
-                <span class="analysis-field-key">{{ fieldLabel(key) }}</span>
-                <div class="analysis-diff-values">
-                  <!-- Icon-Sonderfall -->
-                  <template v-if="key === 'icon'">
-                    <div class="analysis-diff-from">
-                      <IconDisplay v-if="getBaselineNode(selectedNodeId)?.icon" :icon="getBaselineNode(selectedNodeId).icon" :size="24" />
-                      <span v-else style="color:var(--text3)">–</span>
-                    </div>
-                    <span class="analysis-diff-arrow">→</span>
-                    <div class="analysis-diff-to">
-                      <IconDisplay v-if="getVariantNode(vid)?.icon" :icon="getVariantNode(vid).icon" :size="24" />
-                      <span v-else style="color:var(--text3)">–</span>
+            <!-- isAdded: volle Darstellung des neuen Nodes aus der Variante -->
+            <template v-if="detailNode?.isAdded">
+              <template v-if="detailNode.addedIn.includes(vid)">
+                <div class="analysis-node-full">
+                  <div v-if="getVariantNode(vid)?.icon" class="analysis-node-icon-row">
+                    <IconDisplay :icon="getVariantNode(vid).icon" :size="36" />
+                  </div>
+                  <div v-if="getVariantNode(vid)?.icfCode" class="analysis-field-row">
+                    <span class="analysis-field-key">ICF-Code</span>
+                    <span class="analysis-field-val analysis-field-code">{{ getVariantNode(vid).icfCode }}</span>
+                  </div>
+                  <template v-for="f in ALL_FIELDS.filter(f => !['icfCode','options','required','defaultIdx','answerOrder'].includes(f.key))" :key="f.key">
+                    <div v-if="fieldDisplay(getVariantNode(vid), f.key)" class="analysis-field-row">
+                      <span class="analysis-field-key">{{ f.label }}</span>
+                      <span class="analysis-field-val">{{ fieldDisplay(getVariantNode(vid), f.key) }}</span>
                     </div>
                   </template>
-                  <!-- Options-Sonderfall -->
-                  <template v-else-if="key === 'options'">
-                    <div class="analysis-diff-from analysis-options-list">
-                      <span v-for="(o,i) in (getBaselineNode(selectedNodeId)?.options ?? [])" :key="i" class="analysis-option-chip">{{ o }}</span>
-                      <span v-if="!getBaselineNode(selectedNodeId)?.options?.length" style="color:var(--text3)">–</span>
+                  <div v-if="getVariantNode(vid)?.options?.length" class="analysis-field-row">
+                    <span class="analysis-field-key">Antworten</span>
+                    <div class="analysis-options-list">
+                      <span v-for="(opt, i) in getVariantNode(vid).options" :key="i" class="analysis-option-chip analysis-option-chip--new">{{ opt }}</span>
                     </div>
-                    <span class="analysis-diff-arrow">→</span>
-                    <div class="analysis-diff-to analysis-options-list">
-                      <span v-for="(o,i) in (getVariantNode(vid)?.options ?? [])" :key="i" class="analysis-option-chip analysis-option-chip--new">{{ o }}</span>
-                      <span v-if="!getVariantNode(vid)?.options?.length" style="color:var(--text3)">–</span>
-                    </div>
-                  </template>
-                  <!-- Standardfall -->
-                  <template v-else>
-                    <span class="analysis-diff-from">{{ fieldDisplay(getBaselineNode(selectedNodeId), key) ?? '–' }}</span>
-                    <span class="analysis-diff-arrow">→</span>
-                    <span class="analysis-diff-to">{{ fieldDisplay(getVariantNode(vid), key) ?? '–' }}</span>
-                  </template>
+                  </div>
+                  <div class="analysis-field-row analysis-field-row--meta">
+                    <span v-if="getVariantNode(vid)?.questionType" class="analysis-meta-chip">{{ getVariantNode(vid).questionType }}</span>
+                    <span v-if="getVariantNode(vid)?.required" class="analysis-meta-chip analysis-meta-chip--required">Pflichtfeld</span>
+                    <span v-if="getVariantNode(vid)?.answerOrder" class="analysis-meta-chip">{{ getVariantNode(vid).answerOrder }}</span>
+                  </div>
                 </div>
+              </template>
+              <div v-else style="font-size:12px;color:var(--text3);padding:2px 0">
+                Nicht in dieser Variante hinzugefügt.
               </div>
+            </template>
+
+            <!-- Normal: Diff-Darstellung -->
+            <template v-else>
+              <div v-if="!detailNode?.variantsChanged.includes(vid)" style="font-size:12px;color:var(--text3);padding:2px 0">
+                Identisch mit dem Original.
+              </div>
+              <div v-else-if="!getVariantNode(vid)" style="font-size:12px;color:var(--text3);padding:2px 0">
+                Node in dieser Variante nicht vorhanden.
+              </div>
+              <template v-else>
+                <div
+                  v-for="key in changedFields(getBaselineNode(selectedNodeId), getVariantNode(vid))"
+                  :key="key"
+                  class="analysis-diff-row"
+                >
+                  <span class="analysis-field-key">{{ fieldLabel(key) }}</span>
+                  <div class="analysis-diff-values">
+                    <template v-if="key === 'icon'">
+                      <div class="analysis-diff-from">
+                        <IconDisplay v-if="getBaselineNode(selectedNodeId)?.icon" :icon="getBaselineNode(selectedNodeId).icon" :size="24" />
+                        <span v-else style="color:var(--text3)">–</span>
+                      </div>
+                      <span class="analysis-diff-arrow">→</span>
+                      <div class="analysis-diff-to">
+                        <IconDisplay v-if="getVariantNode(vid)?.icon" :icon="getVariantNode(vid).icon" :size="24" />
+                        <span v-else style="color:var(--text3)">–</span>
+                      </div>
+                    </template>
+                    <template v-else-if="key === 'options'">
+                      <div class="analysis-diff-from analysis-options-list">
+                        <span v-for="(o,i) in (getBaselineNode(selectedNodeId)?.options ?? [])" :key="i" class="analysis-option-chip">{{ o }}</span>
+                        <span v-if="!getBaselineNode(selectedNodeId)?.options?.length" style="color:var(--text3)">–</span>
+                      </div>
+                      <span class="analysis-diff-arrow">→</span>
+                      <div class="analysis-diff-to analysis-options-list">
+                        <span v-for="(o,i) in (getVariantNode(vid)?.options ?? [])" :key="i" class="analysis-option-chip analysis-option-chip--new">{{ o }}</span>
+                        <span v-if="!getVariantNode(vid)?.options?.length" style="color:var(--text3)">–</span>
+                      </div>
+                    </template>
+                    <template v-else>
+                      <span class="analysis-diff-from">{{ fieldDisplay(getBaselineNode(selectedNodeId), key) ?? '–' }}</span>
+                      <span class="analysis-diff-arrow">→</span>
+                      <span class="analysis-diff-to">{{ fieldDisplay(getVariantNode(vid), key) ?? '–' }}</span>
+                    </template>
+                  </div>
+                </div>
+              </template>
             </template>
           </div>
         </template>
+
+        <!-- Voting info addon: shown for both changes mode and voting+sunburst when ratings exist -->
+        <div v-if="currentVotingData" class="voting-detail-section">
+          <div class="voting-detail-divider">Voting-Daten</div>
+          <div
+            v-if="currentVotingData.quadrant"
+            class="voting-quadrant-badge"
+            :style="{
+              background: QUADRANT_META[currentVotingData.quadrant].color,
+              color: QUADRANT_META[currentVotingData.quadrant].textColor,
+              borderColor: QUADRANT_META[currentVotingData.quadrant].textColor + '55',
+            }"
+          >
+            <span style="font-weight:700">{{ QUADRANT_META[currentVotingData.quadrant].label }}</span>
+            <span style="font-size:11px;margin-left:8px">{{ QUADRANT_META[currentVotingData.quadrant].hint }}</span>
+          </div>
+          <div v-if="currentVotingData.avgImportance !== null" class="voting-avg-row">
+            <span class="voting-avg-label">Ø Wichtigkeit</span>
+            <div class="voting-bar-wrap">
+              <div
+                class="voting-bar-fill voting-bar--importance"
+                :style="{ width: ((currentVotingData.avgImportance - 1) / 4 * 100) + '%' }"
+              >{{ currentVotingData.avgImportance?.toFixed(1) }}</div>
+            </div>
+          </div>
+          <div v-if="currentVotingData.avgUnderstandability !== null" class="voting-avg-row">
+            <span class="voting-avg-label">Ø Verständlichkeit</span>
+            <div class="voting-bar-wrap">
+              <div
+                class="voting-bar-fill voting-bar--understand"
+                :style="{ width: ((currentVotingData.avgUnderstandability - 1) / 4 * 100) + '%' }"
+              >{{ currentVotingData.avgUnderstandability?.toFixed(1) }}</div>
+            </div>
+          </div>
+          <div v-if="currentVotingData.importanceDist?.some(c => c > 0)" class="voting-hist-section">
+            <div class="voting-hist-title">Verteilung Wichtigkeit (n={{ currentVotingData.importanceDist.reduce((a,b)=>a+b,0) }})</div>
+            <div class="voting-hist">
+              <div v-for="(count, i) in currentVotingData.importanceDist" :key="i" class="voting-hist-col">
+                <div class="voting-hist-bar-wrap">
+                  <div
+                    class="voting-hist-bar voting-hist-bar--importance"
+                    :style="{ height: (count / Math.max(...currentVotingData.importanceDist) * 100) + '%' }"
+                  ></div>
+                </div>
+                <div class="voting-hist-label">{{ i + 1 }}</div>
+                <div class="voting-hist-count">{{ count }}</div>
+              </div>
+            </div>
+          </div>
+          <div v-if="currentVotingData.understandDist?.some(c => c > 0)" class="voting-hist-section">
+            <div class="voting-hist-title">Verteilung Verständlichkeit (n={{ currentVotingData.understandDist.reduce((a,b)=>a+b,0) }})</div>
+            <div class="voting-hist">
+              <div v-for="(count, i) in currentVotingData.understandDist" :key="i" class="voting-hist-col">
+                <div class="voting-hist-bar-wrap">
+                  <div
+                    class="voting-hist-bar voting-hist-bar--understand"
+                    :style="{ height: (count / Math.max(...currentVotingData.understandDist) * 100) + '%' }"
+                  ></div>
+                </div>
+                <div class="voting-hist-label">{{ i + 1 }}</div>
+                <div class="voting-hist-count">{{ count }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -772,6 +1338,25 @@ const legend = [
 .analysis-like-btn:hover { transform: scale(1.2); }
 .analysis-like-btn--active { color: #e11d48; }
 
+.analysis-new-badge {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 8px;
+  background: #dcfce7;
+  color: #15803d;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.analysis-added-badge {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 8px;
+  background: #dcfce7;
+  color: #15803d;
+  font-weight: 600;
+}
+
 .analysis-node-fields {
   display: flex;
   flex-direction: column;
@@ -904,4 +1489,295 @@ const legend = [
   border-radius: 3px;
   padding: 0 4px;
 }
+
+/* ── Mode toggle ────────────────────────────────────────────────────────── */
+.analysis-mode-toggle {
+  display: flex;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.analysis-mode-btn {
+  padding: 3px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  background: var(--bg2, #f8fafc);
+  color: var(--text3);
+  border: none;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+  white-space: nowrap;
+}
+
+.analysis-mode-btn:not(:last-child) {
+  border-right: 1px solid var(--border);
+}
+
+.analysis-mode-btn--active {
+  background: var(--primary, #2563eb);
+  color: #fff;
+}
+
+/* ── Voting detail panel ─────────────────────────────────────────────────── */
+.voting-summary-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.voting-summary-card {
+  background: var(--bg2, #f8fafc);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  text-align: center;
+}
+
+.voting-summary-num {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.voting-summary-label {
+  font-size: 10px;
+  color: var(--text3);
+  margin-top: 2px;
+}
+
+.voting-quadrant-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  font-size: 11px;
+}
+
+.voting-quadrant-badge {
+  border-radius: 8px;
+  padding: 8px 12px;
+  border: 1px solid transparent;
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+
+.voting-avg-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.voting-avg-label {
+  color: var(--text3);
+  width: 120px;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+.voting-bar-wrap {
+  flex: 1;
+  background: var(--bg2, #f1f5f9);
+  border-radius: 6px;
+  height: 16px;
+  overflow: hidden;
+}
+
+.voting-bar-fill {
+  height: 100%;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  padding-left: 6px;
+  font-size: 10px;
+  color: #fff;
+  font-weight: 600;
+  min-width: 28px;
+  transition: width 0.3s;
+}
+
+.voting-bar--importance  { background: #2563eb; }
+.voting-bar--understand  { background: #16a34a; }
+
+.voting-hist-section {
+  margin-top: 4px;
+}
+
+.voting-hist-title {
+  font-size: 11px;
+  color: var(--text3);
+  margin-bottom: 6px;
+}
+
+.voting-hist {
+  display: flex;
+  gap: 6px;
+  align-items: flex-end;
+  height: 60px;
+}
+
+.voting-hist-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  gap: 2px;
+  height: 100%;
+}
+
+.voting-hist-bar-wrap {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  background: var(--bg2, #f1f5f9);
+  border-radius: 3px 3px 0 0;
+  overflow: hidden;
+}
+
+.voting-hist-bar {
+  width: 100%;
+  border-radius: 3px 3px 0 0;
+  min-height: 2px;
+  transition: height 0.3s;
+}
+
+.voting-hist-bar--importance { background: #93c5fd; }
+.voting-hist-bar--understand { background: #86efac; }
+
+.voting-hist-label {
+  font-size: 9px;
+  color: var(--text3);
+  line-height: 1;
+}
+
+.voting-hist-count {
+  font-size: 9px;
+  color: var(--text2);
+  font-weight: 600;
+  line-height: 1;
+}
+
+.voting-detail-section {
+  border-top: 2px solid var(--border);
+  margin-top: 6px;
+  padding-top: 10px;
+}
+
+.voting-detail-divider {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text3);
+  margin-bottom: 8px;
+}
+
+/* ── Run-Through ─────────────────────────────────────────────────────────── */
+.rt-nav {
+  background: var(--bg2, #f8fafc);
+  border: 1px solid var(--border);
+  border-radius: var(--radius, 6px);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.rt-nav-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.rt-nav-count {
+  font-size: 11px;
+  color: var(--text3);
+}
+
+.rt-progress-track {
+  height: 4px;
+  background: var(--bg3, #e2e8f0);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.rt-progress-fill {
+  height: 100%;
+  background: var(--primary, #2563eb);
+  border-radius: 2px;
+  transition: width 0.2s;
+}
+
+.rt-nav-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.rt-nav-controls .btn {
+  flex: 1;
+  justify-content: center;
+}
+
+.rt-next-btn {
+  font-weight: 600;
+}
+
+.rt-kb-hint {
+  font-size: 10px;
+  color: var(--text3);
+  text-align: center;
+  letter-spacing: 0.02em;
+}
+
+.rt-btn-active {
+  background: var(--primary, #2563eb) !important;
+  color: #fff !important;
+  border-color: var(--primary, #2563eb) !important;
+}
+
+/* ── Moderator ───────────────────────────────────────────────────────────────*/
+.moderator-btn--active {
+  background: #fef3c7 !important;
+  color: #92400e !important;
+  border-color: #d97706 !important;
+  font-weight: 600;
+}
+
+/* ── Delphi / Likes ──────────────────────────────────────────────────────────*/
+.likes-count-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  background: #fce7f3;
+  color: #9d174d;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.delphi-like-count {
+  font-size: 10px;
+  color: #9d174d;
+  font-weight: 600;
+  margin-right: 2px;
+}
+
+.delphi-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-left: 4px;
+}
+
+.delphi-dot--consensus  { background: #16a34a; }
+.delphi-dot--controversial { background: #dc2626; }
+.delphi-dot--partial    { background: #d97706; }
 </style>

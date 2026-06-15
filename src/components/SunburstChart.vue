@@ -16,6 +16,10 @@ const props = defineProps({
   selectedNodeId: { type: String, default: null },
   // When set, chart zooms into this section only (questions → inner, items → outer)
   zoomedSectionId: { type: String, default: null },
+  // Voting color mode: 'changes' | 'importance' | 'understandability'
+  colorMode: { type: String, default: 'changes' },
+  // Map: nodeId → { avgImportance, avgUnderstandability }
+  votingMap: { type: Object, default: () => ({}) },
 })
 
 const emit = defineEmits(['select-section', 'select-question', 'select-node'])
@@ -37,6 +41,31 @@ function heatColor(ratio) {
     }
   }
   return stops[stops.length - 1][1]
+}
+
+// Maps rating value 1–5 to a red→yellow→green color gradient
+function ratingColor(value) {
+  if (value === null || value === undefined) return '#e2e8f0'
+  const t = Math.max(0, Math.min(1, (value - 1) / 4))
+  const stops = [
+    [0,    '#ef4444'],
+    [0.5,  '#fde68a'],
+    [1.0,  '#4ade80'],
+  ]
+  for (let i = 0; i < stops.length - 1; i++) {
+    const [t0, c0] = stops[i]
+    const [t1, c1] = stops[i + 1]
+    if (t <= t1) return lerpColor(c0, c1, (t - t0) / (t1 - t0))
+  }
+  return stops[stops.length - 1][1]
+}
+
+function nodeVotingColor(id, fallback) {
+  if (props.colorMode === 'changes') return fallback
+  const vd = props.votingMap[id]
+  if (props.colorMode === 'importance') return ratingColor(vd?.avgImportance ?? null)
+  if (props.colorMode === 'understandability') return ratingColor(vd?.avgUnderstandability ?? null)
+  return fallback
 }
 
 function hexToRgb(hex) {
@@ -61,6 +90,9 @@ function buildQuestionNode(question, sectionId) {
   const qRatio = question.changeCount > 0 && question.totalVariants > 0
     ? Math.min(1, question.changeCount / ((1 + question.children.length) * question.totalVariants))
     : 0
+  const qBaseColor = heatColor(qRatio)
+  const qColor = nodeVotingColor(question.id, qBaseColor)
+
   const itemCount = Math.max(1, question.children.length)
   const itemValue = 1 / itemCount
 
@@ -71,8 +103,9 @@ function buildQuestionNode(question, sectionId) {
     _sectionId: sectionId,
     _changeCount: question.changeCount,
     _total: question.totalVariants,
+    _votingData: props.votingMap[question.id],
     itemStyle: {
-      color: heatColor(qRatio),
+      color: qColor,
       ...itemBorder(question.id, props.selectedQuestionId, 1),
     },
     label: { show: true, fontSize: 10, overflow: 'truncate' },
@@ -81,6 +114,7 @@ function buildQuestionNode(question, sectionId) {
           const itemRatio = item.totalVariants > 0
             ? item.changeCount / item.totalVariants
             : 0
+          const itemBaseColor = heatColor(itemRatio)
           return {
             name: item.label,
             id: item.id,
@@ -90,15 +124,16 @@ function buildQuestionNode(question, sectionId) {
             _changeCount: item.changeCount,
             _total: item.totalVariants,
             _type: item.type,
+            _votingData: props.votingMap[item.id],
             value: itemValue,
             itemStyle: {
-              color: heatColor(itemRatio),
+              color: nodeVotingColor(item.id, itemBaseColor),
               ...itemBorder(item.id, props.selectedNodeId, 1),
             },
             label: { show: false },
           }
         })
-      : [{ name: '', value: 1, itemStyle: { color: heatColor(qRatio) }, label: { show: false } }],
+      : [{ name: '', value: 1, itemStyle: { color: qColor }, label: { show: false } }],
   }
 }
 
@@ -116,6 +151,13 @@ const option = computed(() => {
         trigger: 'item',
         formatter: p => {
           const d = p.data
+          if (props.colorMode !== 'changes') {
+            const vd = d._votingData
+            const ratingStr = vd
+              ? `W: ${vd.avgImportance?.toFixed(1) ?? '–'} · V: ${vd.avgUnderstandability?.toFixed(1) ?? '–'}`
+              : 'Kein Rating'
+            return `<b>${d.name}</b><br/>${ratingStr}`
+          }
           if (d._level === 'item') {
             return `<b>${d.name}</b><br/>${d._type}<br/>Geändert in ${d._changeCount} von ${d._total} Variante(n)`
           }
@@ -156,13 +198,15 @@ const option = computed(() => {
     const secRatio = section.maxPossible > 0
       ? section.changeCount / section.maxPossible
       : 0
+    const secBaseColor = heatColor(secRatio)
 
     return {
       name: section.label,
       id: section.id,
       _level: 'section',
+      _votingData: props.votingMap[section.id],
       itemStyle: {
-        color: heatColor(secRatio),
+        color: nodeVotingColor(section.id, secBaseColor),
         ...itemBorder(section.id, props.selectedSectionId, 1),
       },
       label: { show: true, fontSize: 11, fontWeight: 600 },
@@ -175,6 +219,13 @@ const option = computed(() => {
       trigger: 'item',
       formatter: p => {
         const d = p.data
+        if (props.colorMode !== 'changes') {
+          const vd = d._votingData
+          const ratingStr = vd
+            ? `W: ${vd.avgImportance?.toFixed(1) ?? '–'} · V: ${vd.avgUnderstandability?.toFixed(1) ?? '–'}`
+            : 'Kein Rating'
+          return `<b>${d.name}</b><br/>${ratingStr}`
+        }
         if (d._level === 'item') {
           return `<b>${d.name}</b><br/>${d._type}<br/>Geändert in ${d._changeCount} von ${d._total} Variante(n)`
         }
@@ -199,13 +250,14 @@ const option = computed(() => {
         {
           r0: '10%', r: '38%',
           itemStyle: { borderWidth: 2 },
-          label: { rotate: 'tangential', fontSize: 11, fontWeight: 600 },
+          label: { rotate: 'tangential', fontSize: 11, fontWeight: 600, overflow: 'truncate', width: 72 },
         },
-        // Level 2 – Screening questions (middle)
+        // Level 2 – Screening questions (middle) – Labels ausgeblendet (zu viele/zu schmal)
+        // Details per Tooltip on-hover und im Zoom-Modus sichtbar
         {
           r0: '38%', r: '65%',
           itemStyle: { borderWidth: 1 },
-          label: { rotate: 'tangential', fontSize: 10, overflow: 'truncate', width: 60 },
+          label: { show: false },
         },
         // Level 3 – Items (outer)
         {
