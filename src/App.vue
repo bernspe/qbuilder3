@@ -499,6 +499,7 @@ function handleImport({ raw, asVariant }) {
 // ── Server Storage ─────────────────────────────────────────────────────────
 
 const uploadServer = import.meta.env.VITE_UPLOAD_SERVER ?? ''
+const radarBase    = import.meta.env.VITE_ALLTAGSRADAR ?? ''
 const autosave = useAutosave(uploadServer)
 
 const autosaveStatus = computed(() => autosave.getStatus(qb.currentVariant.value))
@@ -992,6 +993,15 @@ function doExport() {
                 @click.stop="startRenameVariant(v.id)"
                 title="Variante umbenennen"
               >✎</button>
+              <a
+                v-if="radarBase"
+                :href="`${radarBase}?name=${v.id}`"
+                target="_blank"
+                class="btn btn-sm"
+                style="padding:1px 6px;font-size:11px;text-decoration:none"
+                title="Im Alltagsradar öffnen"
+                @click.stop
+              >↗</a>
             </template>
             <button
               v-if="qb.variantList.value.length > 1 && readonlyVariantIds.includes(v.id)"
