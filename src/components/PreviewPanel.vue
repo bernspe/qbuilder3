@@ -48,6 +48,7 @@ const flatItems = computed(() => {
 function resolveAnswers(node) {
   if (node.type === 'icf') return getIcfAnswers(node.icfCode)
   if (node.questionType === 'yesno') return ['Ja', 'Nein']
+  if (node.questionType === 'e-screen') return ['Erschwert meinen Alltag', 'Kein Einfluss', 'Erleichtert meinen Alltag']
   if (node.questionType === 'scale') return ['1', '2', '3', '4', '5']
   return node.options?.length ? node.options : []
 }

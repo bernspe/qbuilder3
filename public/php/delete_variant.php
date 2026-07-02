@@ -24,16 +24,26 @@ if ($name === 'original_pgraph') {
     exit;
 }
 
-$path = dirname(__DIR__) . '/uploads/questionnaires/' . $name . '.json';
-if (!file_exists($path)) {
+$dir     = dirname(__DIR__) . '/uploads/questionnaires/';
+$trash   = $dir . 'Deleted/';
+$src     = $dir . $name . '.json';
+
+if (!file_exists($src)) {
     http_response_code(404);
     echo json_encode(['error' => 'Variante nicht gefunden']);
     exit;
 }
 
-if (!unlink($path)) {
+if (!is_dir($trash)) {
+    mkdir($trash, 0755, true);
+}
+
+// Avoid overwriting an existing deleted file by appending a timestamp
+$dst = $trash . $name . '_' . date('Ymd_His') . '.json';
+
+if (!rename($src, $dst)) {
     http_response_code(500);
-    echo json_encode(['error' => 'Löschen fehlgeschlagen']);
+    echo json_encode(['error' => 'Verschieben fehlgeschlagen']);
     exit;
 }
 

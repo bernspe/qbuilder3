@@ -30,6 +30,19 @@ function closeOnboarding() {
   showOnboarding.value = false
   localStorage.setItem('qb_onboarding_seen', '1')
 }
+
+const showHelpMenu = ref(false)
+function onHelpFocusOut(e) {
+  if (!e.currentTarget.contains(e.relatedTarget)) showHelpMenu.value = false
+}
+
+const HELP_VIDEOS = [
+  { label: 'Variante anlegen',     url: 'https://screen.studio/share/gvAZMe7w' },
+  { label: 'ICF-Items & Mapper',   url: 'https://screen.studio/share/QB4eMbXt' },
+  { label: 'Unterfrage & Upload',  url: 'https://screen.studio/share/Wh6GEz2L' },
+  { label: 'Vorschau & Bewerten',  url: 'https://screen.studio/share/8sDf0p2o' },
+  { label: 'Analyse & Delphi',     url: 'https://screen.studio/share/rAyZVXvt' },
+]
 const ratingCount = computed(() => {
   const vr = gamification.ratings[qb.currentVariant.value] ?? {}
   return Object.values(vr).filter(r => r.importance !== null && r.understandability !== null).length
@@ -423,7 +436,12 @@ function handleMove({ nodeId, targetParentId }) {
 }
 
 async function handleDeleteVariant(id) {
+  const label = qb.variants[id]?.label ?? id
   const wasLinked = autosave.isLinked(id)
+  const msg = wasLinked
+    ? `Variante "${label}" wirklich löschen?\n\nSie wird auf dem Server in den Ordner „Deleted" verschoben.`
+    : `Variante "${label}" wirklich löschen?`
+  if (!confirm(msg)) return
   if (!qb.deleteVariant(id)) return
   gamification.purgeVariantRatings(id)
   autosave.purgeLinked(id)
@@ -501,6 +519,16 @@ function handleImport({ raw, asVariant }) {
 const uploadServer = import.meta.env.VITE_UPLOAD_SERVER ?? ''
 const radarBase    = import.meta.env.VITE_ALLTAGSRADAR ?? ''
 const autosave = useAutosave(uploadServer)
+
+const selectedNodeRadarHref = computed(() => {
+  const id = selectedId.value
+  if (!radarBase || !id || !selectedNode.value) return ''
+  const type = selectedNode.value.type
+  if (!['question', 'subquestion', 'icf'].includes(type)) return ''
+  const linked = autosave.isLinked(qb.currentVariant.value)
+  const namePart = linked ? `name=${qb.currentVariant.value}&` : ''
+  return `${radarBase}?${namePart}id=${id}`
+})
 
 const autosaveStatus = computed(() => autosave.getStatus(qb.currentVariant.value))
 const autosaveButtonLabel = computed(() => {
@@ -760,11 +788,30 @@ function doExport() {
         <button class="btn btn-sm btn-primary" @click="doExport">↓ JSON Export</button>
       </div>
       <div class="header-sep header-actions-desktop"></div>
-      <button
-        class="btn btn-sm"
-        @click="showOnboarding = true"
-        title="Einführungs-Tour starten"
-      >❓</button>
+      <div class="help-menu-wrap" tabindex="-1" @focusout="onHelpFocusOut">
+        <button
+          class="btn btn-sm"
+          title="Hilfe"
+          @click="showHelpMenu = !showHelpMenu"
+        >❓</button>
+        <div v-if="showHelpMenu" class="help-menu">
+          <button
+            class="help-menu-item"
+            @click="showOnboarding = true; showHelpMenu = false"
+          >📋 Einführungs-Tour starten</button>
+          <div class="help-menu-sep"></div>
+          <span class="help-menu-heading">▶ Video-Anleitungen</span>
+          <a
+            v-for="v in HELP_VIDEOS"
+            :key="v.url"
+            class="help-menu-item"
+            :href="v.url"
+            target="_blank"
+            rel="noopener noreferrer"
+            @click="showHelpMenu = false"
+          >{{ v.label }}</a>
+        </div>
+      </div>
     </header>
 
     <!-- Tab bar (Editor/Vorschau/JSON) + Mobile Panel Tabs -->
@@ -882,6 +929,7 @@ function doExport() {
             <NodeEditor
               :node="selectedNode"
               :readonly="isReadonly"
+              :radar-href="selectedNodeRadarHref"
               @update="handleUpdate"
               @delete="handleDelete"
               @add-child="handleAddChild"
@@ -956,7 +1004,7 @@ function doExport() {
             class="tree-item"
             :class="{ selected: v.id === qb.currentVariant.value }"
             data-testid="variant-item"
-            @click="qb.switchVariant(v.id)"
+            @click="v.id === qb.currentVariant.value ? qb.switchVariant(baselineVariantId) : qb.switchVariant(v.id)"
             style="margin-bottom:3px"
           >
             <span class="ti-icon">◈</span>

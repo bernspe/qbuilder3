@@ -2,6 +2,7 @@
 import { ref, computed, watch, toRef, onMounted, onUnmounted } from 'vue'
 import { useAnalysis } from '../composables/useAnalysis.js'
 import { useVotingAnalysis } from '../composables/useVotingAnalysis.js'
+import { useGamification } from '../composables/useGamification.js'
 import { useLikes } from '../composables/useLikes.js'
 import { aggregateLikes, createConsensusNodes } from '../composables/useLikeAggregation.js'
 import SunburstChart from './SunburstChart.vue'
@@ -85,6 +86,14 @@ function resetZoom() {
   zoomedSectionId.value = null
 }
 
+// Verlässt die Detailansicht komplett (zurück zur Rangliste)
+function deselectAll() {
+  selectedSectionId.value = null
+  selectedQuestionId.value = null
+  selectedNodeId.value = null
+  zoomedSectionId.value = null
+}
+
 function onSelectQuestion({ questionId, sectionId }) {
   selectedSectionId.value = sectionId
   selectedQuestionId.value = questionId
@@ -123,6 +132,47 @@ function toggleModerator() {
 
 // Like functionality (persisted in localStorage)
 const likesMgr = useLikes('qb_analysis_likes')
+
+// Gamification leaderboard: Punkte je Variante ggü. der gewählten Baseline
+const gamification = useGamification()
+gamification.loadRatingsFromStorage()
+
+function pointsFor(vid) {
+  return gamification.calculatePoints(props.variants, vid, localBaselineId.value)
+}
+
+const leaderboard = computed(() =>
+  selectedVariants.value
+    .map(vid => ({ id: vid, label: props.variants[vid]?.label ?? vid, points: pointsFor(vid) }))
+    .sort((a, b) => b.points - a.points)
+)
+
+// ── Varianten-Auswahl: sortierbare Tabelle (Alternative zur Checkbox-Zeile) ──
+// "order" = Einfüge-Reihenfolge in variantIds; kein echtes Erstellungsdatum im
+// Datenmodell vorhanden, dient nur als Näherung ("zuerst angelegt" ≈ niedrige Nummer).
+const showVariantPicker = ref(false)
+const variantSort = ref({ key: 'order', dir: 1 })
+
+function sortVariantsBy(key) {
+  if (variantSort.value.key === key) variantSort.value.dir *= -1
+  else variantSort.value = { key, dir: key === 'points' ? -1 : 1 }
+}
+
+const variantRows = computed(() =>
+  variantIds.value.map((vid, idx) => ({
+    id: vid,
+    label: props.variants[vid]?.label ?? vid,
+    points: pointsFor(vid),
+    order: idx + 1,
+  }))
+)
+
+const sortedVariantRows = computed(() => {
+  const { key, dir } = variantSort.value
+  return [...variantRows.value].sort((a, b) =>
+    key === 'label' ? a.label.localeCompare(b.label) * dir : (a[key] - b[key]) * dir
+  )
+})
 
 const activeNodeId = computed(() =>
   selectedNodeId.value ?? selectedQuestionId.value ?? selectedSectionId.value
@@ -212,13 +262,16 @@ const ALL_FIELDS = [
 
 // Returns only the fields that differ between baseline and variant node
 function changedFields(baseNode, varNode) {
-  if (!varNode) return ALL_FIELDS.map(f => f.key)
-  return ALL_FIELDS
+  if (!varNode) return ['icon', ...ALL_FIELDS.map(f => f.key)]
+  const fields = ALL_FIELDS
     .filter(f => JSON.stringify(baseNode?.[f.key]) !== JSON.stringify(varNode?.[f.key]))
     .map(f => f.key)
+  if (JSON.stringify(baseNode?.icon) !== JSON.stringify(varNode?.icon)) fields.unshift('icon')
+  return fields
 }
 
 function fieldLabel(key) {
+  if (key === 'icon') return 'Icon'
   return ALL_FIELDS.find(f => f.key === key)?.label ?? key
 }
 
@@ -228,6 +281,48 @@ function fieldDisplay(node, key) {
   if (typeof val === 'boolean') return val ? 'Ja' : 'Nein'
   if (Array.isArray(val)) return val.length ? val.join(' · ') : null
   return String(val)
+}
+
+// ── Variant grouping ─────────────────────────────────────────────────────────
+// Varianten mit identischem Inhalt (gleiche Änderung) werden zu einer Karte
+// zusammengefasst. `selectedVariants` ist die einzige verfügbare Ordnung
+// (keine Erstellungs-Zeitstempel im Datenmodell) – sie dient als Näherung für
+// "zeitliche" Reihenfolge, sodass der erste Eintrag pro Gruppe der "Original"-Autor
+// der Änderung ist und allein den Like-Button erhält.
+const SENTINEL_LABELS = {
+  __unchanged__: 'unverändert',
+  __not_added__: 'nicht vorhanden',
+  __missing__: 'Node nicht vorhanden',
+}
+
+function variantSignature(vid) {
+  if (detailNode.value?.isAdded) {
+    if (!detailNode.value.addedIn.includes(vid)) return '__not_added__'
+    const node = getVariantNode(vid)
+    return JSON.stringify(ALL_FIELDS.map(f => node?.[f.key]))
+  }
+  if (!detailNode.value?.variantsChanged.includes(vid)) return '__unchanged__'
+  const node = getVariantNode(vid)
+  if (!node) return '__missing__'
+  const base = getBaselineNode(selectedNodeId.value)
+  return JSON.stringify(changedFields(base, node).map(k => [k, node[k]]))
+}
+
+// Gruppiert `selectedVariants` nach identischem Inhalt, Reihenfolge = Erstauftreten.
+const variantGroups = computed(() => {
+  const groups = []
+  const bySig = new Map()
+  for (const vid of selectedVariants.value) {
+    const sig = variantSignature(vid)
+    let g = bySig.get(sig)
+    if (!g) { g = { sig, vids: [] }; bySig.set(sig, g); groups.push(g) }
+    g.vids.push(vid)
+  }
+  return groups
+})
+
+function groupLabel(vids) {
+  return vids.map(v => props.variants[v]?.label ?? v).join(', ')
 }
 
 // Legend colors
@@ -363,19 +458,43 @@ onUnmounted(() => document.removeEventListener('keydown', handleRunThroughKey))
       </select>
 
       <span style="width:12px"></span>
-      <span style="font-size:12px;color:var(--text3);margin-right:8px">Vergleiche:</span>
-      <label
-        v-for="vid in variantIds"
-        :key="vid"
-        class="analysis-variant-check"
-      >
-        <input
-          type="checkbox"
-          :value="vid"
-          v-model="selectedVariants"
-        />
-        {{ props.variants[vid]?.label ?? vid }}
-      </label>
+      <div class="variant-picker">
+        <button class="btn btn-sm" @click="showVariantPicker = !showVariantPicker">
+          Vergleiche: {{ selectedVariants.length }}/{{ variantIds.length }} ▾
+        </button>
+        <div v-if="showVariantPicker" class="variant-picker-popover">
+          <div class="variant-picker-actions">
+            <button class="btn btn-sm" @click="selectedVariants = [...variantIds]">Alle</button>
+            <button class="btn btn-sm" @click="selectedVariants = []">Keine</button>
+            <span style="flex:1"></span>
+            <button class="btn btn-sm" @click="showVariantPicker = false">✕</button>
+          </div>
+          <table class="variant-picker-table">
+            <thead>
+              <tr>
+                <th></th>
+                <th @click="sortVariantsBy('label')">
+                  Name <span v-if="variantSort.key === 'label'">{{ variantSort.dir === 1 ? '▲' : '▼' }}</span>
+                </th>
+                <th @click="sortVariantsBy('points')">
+                  Punkte <span v-if="variantSort.key === 'points'">{{ variantSort.dir === 1 ? '▲' : '▼' }}</span>
+                </th>
+                <th @click="sortVariantsBy('order')" title="Einfüge-Reihenfolge – kein exaktes Erstellungsdatum verfügbar">
+                  Erstellt (Nr.) <span v-if="variantSort.key === 'order'">{{ variantSort.dir === 1 ? '▲' : '▼' }}</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="row in sortedVariantRows" :key="row.id">
+                <td><input type="checkbox" :value="row.id" v-model="selectedVariants" /></td>
+                <td>{{ row.label }}</td>
+                <td>{{ row.points }}</td>
+                <td>#{{ row.order }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
 
       <!-- Reload button -->
       <button
@@ -718,19 +837,44 @@ onUnmounted(() => document.removeEventListener('keydown', handleRunThroughKey))
           <div class="rt-kb-hint">← → navigieren · Esc beendet</div>
         </div>
 
-        <!-- No selection -->
-        <div v-if="!selectedSectionId && !isRunThrough" class="analysis-detail-empty">
-          Wähle einen Abschnitt, eine Screeningfrage oder ein Item im Chart aus.
-        </div>
+        <!-- No selection: Leaderboard (nur im Änderungen-Modus) + Hinweis -->
+        <template v-if="!selectedSectionId && !isRunThrough">
+          <div v-if="mode === 'changes'" class="analysis-leaderboard">
+            <div class="analysis-detail-header">
+              <div>
+                <span class="analysis-detail-title">🏆 Rangliste</span>
+                <span class="analysis-detail-sub">Punkte je Variante ggü. „{{ props.variants[localBaselineId]?.label ?? localBaselineId }}“</span>
+              </div>
+            </div>
+            <table class="leaderboard-table">
+              <tbody>
+                <tr v-for="(row, i) in leaderboard" :key="row.id">
+                  <td class="leaderboard-rank">{{ i + 1 }}.</td>
+                  <td class="leaderboard-name">{{ row.label }}</td>
+                  <td class="leaderboard-points">{{ row.points }} Pkt</td>
+                </tr>
+                <tr v-if="!leaderboard.length">
+                  <td colspan="3" style="color:var(--text3);padding:12px;text-align:center">Keine Varianten ausgewählt.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="analysis-detail-empty">
+            Wähle einen Abschnitt, eine Screeningfrage oder ein Item im Chart aus.
+          </div>
+        </template>
 
         <!-- Section selected, no question -->
         <template v-else-if="!selectedQuestionId">
           <div class="analysis-detail-header">
-            <span class="analysis-detail-title">{{ detailSection?.label }}</span>
-            <span class="analysis-detail-sub">
-              Abschnitt · {{ detailSection?.changeCount }} Änderungen
-              <template v-if="detailSection?.isAdded"> · Neu in: {{ detailSection.addedIn.map(id => props.variants[id]?.label ?? id).join(', ') }}</template>
-            </span>
+            <button class="btn btn-sm" style="margin-right:8px" @click="deselectAll">← Rangliste</button>
+            <div>
+              <span class="analysis-detail-title">{{ detailSection?.label }}</span>
+              <span class="analysis-detail-sub">
+                Abschnitt · {{ detailSection?.changeCount }} Änderungen
+                <template v-if="detailSection?.isAdded"> · Neu in: {{ detailSection.addedIn.map(id => props.variants[id]?.label ?? id).join(', ') }}</template>
+              </span>
+            </div>
           </div>
           <div class="analysis-node-list">
             <div
@@ -857,89 +1001,70 @@ onUnmounted(() => document.removeEventListener('keydown', handleRunThroughKey))
             </div>
           </div>
 
-          <!-- Each variant -->
-          <div
-            v-for="vid in selectedVariants"
-            :key="vid"
-            class="analysis-variant-card"
-            :class="{ 'analysis-variant-card--changed': detailNode?.isAdded ? detailNode.addedIn.includes(vid) : detailNode?.variantsChanged.includes(vid) }"
-          >
-            <div class="analysis-variant-card-header">
-              <span class="analysis-variant-name">{{ props.variants[vid]?.label ?? vid }}</span>
-              <!-- isAdded: zeige ob diese Variante den neuen Node enthält -->
-              <template v-if="detailNode?.isAdded">
-                <span v-if="detailNode.addedIn.includes(vid)" class="analysis-added-badge">neu hinzugefügt</span>
-                <span v-else class="analysis-unchanged-badge">nicht vorhanden</span>
-                <template v-if="detailNode.addedIn.includes(vid)">
-                  <span v-if="likeCountForVariant(selectedNodeId, vid) > 0" class="delphi-like-count">{{ likeCountForVariant(selectedNodeId, vid) }}/{{ totalExpertCount }}</span>
-                  <button
-                    class="analysis-like-btn"
-                    :class="{ 'analysis-like-btn--active': isLiked(vid) }"
-                    @click="toggleLike(vid)"
-                    :title="`${likeCountForVariant(selectedNodeId, vid)} von ${totalExpertCount} Experten bevorzugen diese Variante`"
-                  >{{ isLiked(vid) ? '♥' : '♡' }}</button>
-                </template>
-              </template>
-              <!-- Normal: geändert / unverändert + Like -->
-              <template v-else>
-                <span v-if="detailNode?.variantsChanged.includes(vid)" class="analysis-changed-badge">geändert</span>
-                <span v-else class="analysis-unchanged-badge">unverändert</span>
-                <span v-if="likeCountForVariant(selectedNodeId, vid) > 0" class="delphi-like-count">{{ likeCountForVariant(selectedNodeId, vid) }}/{{ totalExpertCount }}</span>
-                <button
-                  class="analysis-like-btn"
-                  :class="{ 'analysis-like-btn--active': isLiked(vid) }"
-                  @click="toggleLike(vid)"
-                  :title="`${likeCountForVariant(selectedNodeId, vid)} von ${totalExpertCount} Experten bevorzugen diese Variante`"
-                >{{ isLiked(vid) ? '♥' : '♡' }}</button>
-              </template>
+          <!-- Variant groups: Varianten mit identischem Inhalt teilen sich eine Karte -->
+          <template v-for="group in variantGroups" :key="group.sig">
+            <!-- Sentinel-Gruppe: keine inhaltliche Änderung → eine Zusammenfassungszeile -->
+            <div v-if="group.sig.startsWith('__')" class="analysis-variant-summary-row">
+              <span class="analysis-unchanged-badge">{{ SENTINEL_LABELS[group.sig] }}</span>
+              <span class="analysis-variant-summary-names">{{ groupLabel(group.vids) }}</span>
             </div>
 
-            <!-- isAdded: volle Darstellung des neuen Nodes aus der Variante -->
-            <template v-if="detailNode?.isAdded">
-              <template v-if="detailNode.addedIn.includes(vid)">
-                <div class="analysis-node-full">
-                  <div v-if="getVariantNode(vid)?.icon" class="analysis-node-icon-row">
-                    <IconDisplay :icon="getVariantNode(vid).icon" :size="36" />
+            <!-- Inhaltsgruppe: eine Karte für alle Varianten mit identischer Änderung -->
+            <div v-else class="analysis-variant-card analysis-variant-card--changed">
+              <div class="analysis-variant-card-header">
+                <span class="analysis-variant-name">
+                  {{ props.variants[group.vids[0]]?.label ?? group.vids[0] }}
+                  <span
+                    v-if="group.vids.length > 1"
+                    class="analysis-group-count"
+                    :title="'Auch in: ' + groupLabel(group.vids.slice(1))"
+                  >+{{ group.vids.length - 1 }} weitere</span>
+                </span>
+                <span v-if="detailNode?.isAdded" class="analysis-added-badge">neu hinzugefügt</span>
+                <span v-else class="analysis-changed-badge">geändert</span>
+                <span v-if="likeCountForVariant(selectedNodeId, group.vids[0]) > 0" class="delphi-like-count">{{ likeCountForVariant(selectedNodeId, group.vids[0]) }}/{{ totalExpertCount }}</span>
+                <button
+                  class="analysis-like-btn"
+                  :class="{ 'analysis-like-btn--active': isLiked(group.vids[0]) }"
+                  @click="toggleLike(group.vids[0])"
+                  :title="group.vids.length > 1
+                    ? `Like gilt für die zuerst eingebrachte Variante (${groupLabel(group.vids)})`
+                    : `${likeCountForVariant(selectedNodeId, group.vids[0])} von ${totalExpertCount} Experten bevorzugen diese Variante`"
+                >{{ isLiked(group.vids[0]) ? '♥' : '♡' }}</button>
+              </div>
+
+              <!-- isAdded: volle Darstellung des neuen Nodes -->
+              <div v-if="detailNode?.isAdded" class="analysis-node-full">
+                <div v-if="getVariantNode(group.vids[0])?.icon" class="analysis-node-icon-row">
+                  <IconDisplay :icon="getVariantNode(group.vids[0]).icon" :size="36" />
+                </div>
+                <div v-if="getVariantNode(group.vids[0])?.icfCode" class="analysis-field-row">
+                  <span class="analysis-field-key">ICF-Code</span>
+                  <span class="analysis-field-val analysis-field-code">{{ getVariantNode(group.vids[0]).icfCode }}</span>
+                </div>
+                <template v-for="f in ALL_FIELDS.filter(f => !['icfCode','options','required','defaultIdx','answerOrder'].includes(f.key))" :key="f.key">
+                  <div v-if="fieldDisplay(getVariantNode(group.vids[0]), f.key)" class="analysis-field-row">
+                    <span class="analysis-field-key">{{ f.label }}</span>
+                    <span class="analysis-field-val">{{ fieldDisplay(getVariantNode(group.vids[0]), f.key) }}</span>
                   </div>
-                  <div v-if="getVariantNode(vid)?.icfCode" class="analysis-field-row">
-                    <span class="analysis-field-key">ICF-Code</span>
-                    <span class="analysis-field-val analysis-field-code">{{ getVariantNode(vid).icfCode }}</span>
-                  </div>
-                  <template v-for="f in ALL_FIELDS.filter(f => !['icfCode','options','required','defaultIdx','answerOrder'].includes(f.key))" :key="f.key">
-                    <div v-if="fieldDisplay(getVariantNode(vid), f.key)" class="analysis-field-row">
-                      <span class="analysis-field-key">{{ f.label }}</span>
-                      <span class="analysis-field-val">{{ fieldDisplay(getVariantNode(vid), f.key) }}</span>
-                    </div>
-                  </template>
-                  <div v-if="getVariantNode(vid)?.options?.length" class="analysis-field-row">
-                    <span class="analysis-field-key">Antworten</span>
-                    <div class="analysis-options-list">
-                      <span v-for="(opt, i) in getVariantNode(vid).options" :key="i" class="analysis-option-chip analysis-option-chip--new">{{ opt }}</span>
-                    </div>
-                  </div>
-                  <div class="analysis-field-row analysis-field-row--meta">
-                    <span v-if="getVariantNode(vid)?.questionType" class="analysis-meta-chip">{{ getVariantNode(vid).questionType }}</span>
-                    <span v-if="getVariantNode(vid)?.required" class="analysis-meta-chip analysis-meta-chip--required">Pflichtfeld</span>
-                    <span v-if="getVariantNode(vid)?.answerOrder" class="analysis-meta-chip">{{ getVariantNode(vid).answerOrder }}</span>
+                </template>
+                <div v-if="getVariantNode(group.vids[0])?.options?.length" class="analysis-field-row">
+                  <span class="analysis-field-key">Antworten</span>
+                  <div class="analysis-options-list">
+                    <span v-for="(opt, i) in getVariantNode(group.vids[0]).options" :key="i" class="analysis-option-chip analysis-option-chip--new">{{ opt }}</span>
                   </div>
                 </div>
-              </template>
-              <div v-else style="font-size:12px;color:var(--text3);padding:2px 0">
-                Nicht in dieser Variante hinzugefügt.
+                <div class="analysis-field-row analysis-field-row--meta">
+                  <span v-if="getVariantNode(group.vids[0])?.questionType" class="analysis-meta-chip">{{ getVariantNode(group.vids[0]).questionType }}</span>
+                  <span v-if="getVariantNode(group.vids[0])?.required" class="analysis-meta-chip analysis-meta-chip--required">Pflichtfeld</span>
+                  <span v-if="getVariantNode(group.vids[0])?.answerOrder" class="analysis-meta-chip">{{ getVariantNode(group.vids[0]).answerOrder }}</span>
+                </div>
               </div>
-            </template>
 
-            <!-- Normal: Diff-Darstellung -->
-            <template v-else>
-              <div v-if="!detailNode?.variantsChanged.includes(vid)" style="font-size:12px;color:var(--text3);padding:2px 0">
-                Identisch mit dem Original.
-              </div>
-              <div v-else-if="!getVariantNode(vid)" style="font-size:12px;color:var(--text3);padding:2px 0">
-                Node in dieser Variante nicht vorhanden.
-              </div>
+              <!-- Normal: Diff-Darstellung -->
               <template v-else>
                 <div
-                  v-for="key in changedFields(getBaselineNode(selectedNodeId), getVariantNode(vid))"
+                  v-for="key in changedFields(getBaselineNode(selectedNodeId), getVariantNode(group.vids[0]))"
                   :key="key"
                   class="analysis-diff-row"
                 >
@@ -952,7 +1077,7 @@ onUnmounted(() => document.removeEventListener('keydown', handleRunThroughKey))
                       </div>
                       <span class="analysis-diff-arrow">→</span>
                       <div class="analysis-diff-to">
-                        <IconDisplay v-if="getVariantNode(vid)?.icon" :icon="getVariantNode(vid).icon" :size="24" />
+                        <IconDisplay v-if="getVariantNode(group.vids[0])?.icon" :icon="getVariantNode(group.vids[0]).icon" :size="24" />
                         <span v-else style="color:var(--text3)">–</span>
                       </div>
                     </template>
@@ -963,20 +1088,20 @@ onUnmounted(() => document.removeEventListener('keydown', handleRunThroughKey))
                       </div>
                       <span class="analysis-diff-arrow">→</span>
                       <div class="analysis-diff-to analysis-options-list">
-                        <span v-for="(o,i) in (getVariantNode(vid)?.options ?? [])" :key="i" class="analysis-option-chip analysis-option-chip--new">{{ o }}</span>
-                        <span v-if="!getVariantNode(vid)?.options?.length" style="color:var(--text3)">–</span>
+                        <span v-for="(o,i) in (getVariantNode(group.vids[0])?.options ?? [])" :key="i" class="analysis-option-chip analysis-option-chip--new">{{ o }}</span>
+                        <span v-if="!getVariantNode(group.vids[0])?.options?.length" style="color:var(--text3)">–</span>
                       </div>
                     </template>
                     <template v-else>
                       <span class="analysis-diff-from">{{ fieldDisplay(getBaselineNode(selectedNodeId), key) ?? '–' }}</span>
                       <span class="analysis-diff-arrow">→</span>
-                      <span class="analysis-diff-to">{{ fieldDisplay(getVariantNode(vid), key) ?? '–' }}</span>
+                      <span class="analysis-diff-to">{{ fieldDisplay(getVariantNode(group.vids[0]), key) ?? '–' }}</span>
                     </template>
                   </div>
                 </div>
               </template>
-            </template>
-          </div>
+            </div>
+          </template>
         </template>
 
         <!-- Voting info addon: shown for both changes mode and voting+sunburst when ratings exist -->
@@ -1083,6 +1208,57 @@ onUnmounted(() => document.removeEventListener('keydown', handleRunThroughKey))
   gap: 4px;
   font-size: 12px;
   cursor: pointer;
+}
+
+.variant-picker {
+  position: relative;
+}
+
+.variant-picker-popover {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 20;
+  background: var(--bg, #fff);
+  border: 1px solid var(--border);
+  border-radius: var(--radius, 6px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  padding: 8px;
+  min-width: 320px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.variant-picker-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.variant-picker-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.variant-picker-table th {
+  text-align: left;
+  color: var(--text3);
+  font-weight: 600;
+  padding: 4px 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.variant-picker-table th:hover {
+  color: var(--text);
+}
+
+.variant-picker-table td {
+  padding: 4px 6px;
+  border-top: 1px solid var(--border);
 }
 
 .analysis-legend {
@@ -1207,6 +1383,36 @@ onUnmounted(() => document.removeEventListener('keydown', handleRunThroughKey))
   margin-top: 48px;
 }
 
+.leaderboard-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.leaderboard-table tr:not(:last-child) {
+  border-bottom: 1px solid var(--border);
+}
+
+.leaderboard-table td {
+  padding: 7px 4px;
+  font-size: 13px;
+}
+
+.leaderboard-rank {
+  color: var(--text3);
+  width: 28px;
+}
+
+.leaderboard-name {
+  font-weight: 500;
+}
+
+.leaderboard-points {
+  text-align: right;
+  color: var(--primary, #2563eb);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 .analysis-detail-header {
   display: flex;
   align-items: flex-start;
@@ -1292,6 +1498,26 @@ onUnmounted(() => document.removeEventListener('keydown', handleRunThroughKey))
   align-items: center;
   gap: 6px;
   margin-bottom: 8px;
+}
+
+.analysis-variant-summary-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 2px;
+  font-size: 12px;
+}
+
+.analysis-variant-summary-names {
+  color: var(--text3);
+}
+
+.analysis-group-count {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text3);
+  margin-left: 6px;
+  cursor: help;
 }
 
 .analysis-variant-name {

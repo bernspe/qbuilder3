@@ -54,8 +54,7 @@ export function useGamification(config = GAMIFICATION_CONFIG) {
     return String(v)
   }
 
-  function calculatePoints(variants, variantId) {
-    const baselineId = Object.keys(variants)[0]
+  function calculatePoints(variants, variantId, baselineId = Object.keys(variants)[0]) {
     if (variantId === baselineId) return 0
     const mainItems = _flattenScorable(variants[baselineId]?.nodes ?? [])
     const variantItems = _flattenScorable(variants[variantId]?.nodes ?? [])

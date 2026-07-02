@@ -54,6 +54,27 @@ describe('makeNode – question type', () => {
   })
 })
 
+describe('e-screen questionType', () => {
+  it('can be set on a question node', () => {
+    const qb = useQuestionnaire()
+    const node = qb.addNode('question', null)
+    node.questionType = 'e-screen'
+    expect(qb.findInVariant(node.id).questionType).toBe('e-screen')
+  })
+
+  it('accepts 3 bipolar options with defaultIdx 1', () => {
+    const qb = useQuestionnaire()
+    const node = qb.addNode('question', null)
+    node.questionType = 'e-screen'
+    node.options    = ['Erschwert meinen Alltag', 'Kein Einfluss', 'Erleichtert meinen Alltag']
+    node.defaultIdx = 1
+    const n = qb.findInVariant(node.id)
+    expect(n.options).toHaveLength(3)
+    expect(n.defaultIdx).toBe(1)
+    expect(n.options[1]).toBe('Kein Einfluss')
+  })
+})
+
 describe('makeNode – subquestion type', () => {
   it('has icon field defaulting to empty string', () => {
     const qb = useQuestionnaire()

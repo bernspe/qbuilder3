@@ -6,7 +6,8 @@ import { lookupIcf, getIcfAnswers } from '../composables/useIcfData.js'
 
 const props = defineProps({
   node: Object,
-  readonly: { type: Boolean, default: false }
+  readonly: { type: Boolean, default: false },
+  radarHref: { type: String, default: '' }
 })
 const emit = defineEmits(['update', 'delete', 'add-child', 'move'])
 
@@ -15,6 +16,28 @@ const typeLabel = computed(() => ({ section: 'Abschnitt', question: 'Screeningfr
 
 function update(field, value) {
   emit('update', { id: props.node.id, field, value })
+}
+
+function onQuestionTypeChange(val) {
+  update('questionType', val)
+  if (val === 'e-screen') {
+    update('options', ['Erschwert meinen Alltag', 'Kein Einfluss', 'Erleichtert meinen Alltag'])
+    update('defaultIdx', 1)
+  }
+}
+
+const SUBQUESTION_DEFAULTS = {
+  yesno: ['Ja', 'Nein'],
+  'e-screen': ['Erschwert meinen Alltag', 'Kein Einfluss', 'Erleichtert meinen Alltag'],
+  scale: ['1', '2', '3', '4', '5'],
+}
+
+function onSubquestionTypeChange(val) {
+  update('questionType', val)
+  if (SUBQUESTION_DEFAULTS[val]) {
+    update('options', SUBQUESTION_DEFAULTS[val])
+    if (val === 'e-screen') update('defaultIdx', 1)
+  }
 }
 
 function updateBranch(i, label) {
@@ -96,6 +119,15 @@ const questionPreviewOptions = computed(() => {
       </span>
       <span v-if="readonly" class="readonly-badge">Nur lesen</span>
       <div v-else style="display:flex;gap:6px;align-items:center">
+        <a
+          v-if="radarHref"
+          :href="radarHref"
+          target="_blank"
+          class="btn btn-sm"
+          style="text-decoration:none"
+          title="Im Alltagsradar bei dieser Frage öffnen"
+          @click.stop
+        >↗ Frage</a>
         <button
           v-if="['question','subquestion','icf'].includes(node.type)"
           class="btn btn-sm"
@@ -246,8 +278,9 @@ const questionPreviewOptions = computed(() => {
         <div data-tour="answers-field">
           <div class="field">
             <label>Fragetyp</label>
-            <select :value="node.questionType" @change="update('questionType', $event.target.value)">
+            <select :value="node.questionType" @change="onQuestionTypeChange($event.target.value)">
               <option value="yesno">Ja / Nein</option>
+              <option value="e-screen">Umwelt-Screening (Barriere / Neutral / Förderfaktor)</option>
               <option value="scale">Skala (1–5)</option>
             </select>
           </div>
@@ -352,6 +385,16 @@ const questionPreviewOptions = computed(() => {
         </div>
 
         <div data-tour="answers-field">
+          <div class="field">
+            <label>Fragetyp</label>
+            <select :value="node.questionType ?? 'single'" @change="onSubquestionTypeChange($event.target.value)">
+              <option value="yesno">Ja / Nein</option>
+              <option value="e-screen">Umwelt-Screening (Barriere / Neutral / Förderfaktor)</option>
+              <option value="scale">Skala (1–5)</option>
+              <option value="single">Eigene Optionen</option>
+            </select>
+          </div>
+
           <div class="field">
             <label>Antwortoptionen (eine pro Zeile)</label>
             <textarea
